@@ -1,0 +1,46 @@
+{
+  "UK": {
+    "currency": "GBP",
+    "currency_symbol": "£",
+    "regulatory_body": "Companies House / FCA",
+    "loi_template": "uk_hot",
+    "ecrm_flags": ["related_party_transactions", "directors_loans", "revenue_spike_pre_sale", "beneficial_ownership", "account_manipulation"],
+    "benchmark_note": "Damodaran global multiples with 30-40% UK private SME discount applied",
+    "typical_debt_multiple": "3.0-3.5x EBITDA",
+    "typical_hold_period": "4-6 years",
+    "flag": "🇬🇧"
+  },
+  "India": {
+    "currency": "INR",
+    "currency_symbol": "₹",
+    "regulatory_body": "MCA / SEBI / RBI",
+    "loi_template": "india_mou",
+    "ecrm_flags": ["related_party_transactions", "revenue_spike_pre_sale", "gst_compliance", "rbi_fdi_compliance", "promoter_pledging", "beneficial_ownership"],
+    "benchmark_note": "Damodaran global multiples with 40-50% Indian private SME discount applied",
+    "typical_debt_multiple": "2.0-2.5x EBITDA",
+    "typical_hold_period": "4-7 years",
+    "flag": "🇮🇳"
+  },
+  "US": {
+    "currency": "USD",
+    "currency_symbol": "$",
+    "regulatory_body": "SEC / State regulators",
+    "loi_template": "us_loi",
+    "ecrm_flags": ["related_party_transactions", "revenue_recognition", "revenue_spike_pre_sale", "beneficial_ownership", "sec_compliance"],
+    "benchmark_note": "Damodaran global multiples — US public company basis, apply 20-30% private discount",
+    "typical_debt_multiple": "3.5-4.5x EBITDA",
+    "typical_hold_period": "5-7 years",
+    "flag": "🇺🇸"
+  },
+  "Europe": {
+    "currency": "EUR",
+    "currency_symbol": "€",
+    "regulatory_body": "Varies by country — EU regulatory framework",
+    "loi_template": "europe_hot",
+    "ecrm_flags": ["related_party_transactions", "revenue_spike_pre_sale", "beneficial_ownership", "gdpr_compliance", "vat_compliance"],
+    "benchmark_note": "Damodaran global multiples with 30-40% European private SME discount applied",
+    "typical_debt_multiple": "3.0-4.0x EBITDA",
+    "typical_hold_period": "4-6 years",
+    "flag": "🇪🇺"
+  }
+}

@@ -1,0 +1,610 @@
+{
+  "_metadata": {
+    "source": "Damodaran January 2026 — Global dataset (vebitdaGlobal.xls, marginGlobal.xls, histgrGlobal.xls)",
+    "downloaded_from": "https://pages.stern.nyu.edu/~adamodar/pc/datasets/",
+    "updated": "January 9, 2026",
+    "next_update": "January 2027",
+    "note": "Based on global public company data. Private SME discount applied per geography_config.json. Industry names match Damodaran's exact labels.",
+    "coverage": "94 industries globally"
+  },
+  "Advertising": {
+    "damodaran_label": "Advertising",
+    "ev_ebitda_median": 10.4,
+    "ebitda_margin_median": 9.8,
+    "revenue_growth_median": 5.2,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Aerospace/Defense": {
+    "damodaran_label": "Aerospace/Defense",
+    "ev_ebitda_median": 14.2,
+    "ebitda_margin_median": 11.4,
+    "revenue_growth_median": 5.8,
+    "private_sme_discount_pct": 30,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Air Transport": {
+    "damodaran_label": "Air Transport",
+    "ev_ebitda_median": 6.8,
+    "ebitda_margin_median": 12.4,
+    "revenue_growth_median": 8.2,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Apparel": {
+    "damodaran_label": "Apparel",
+    "ev_ebitda_median": 9.6,
+    "ebitda_margin_median": 10.2,
+    "revenue_growth_median": 3.8,
+    "private_sme_discount_pct": 40,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Auto & Truck": {
+    "damodaran_label": "Auto & Truck",
+    "ev_ebitda_median": 7.2,
+    "ebitda_margin_median": 9.6,
+    "revenue_growth_median": 4.2,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Auto Parts": {
+    "damodaran_label": "Auto Parts",
+    "ev_ebitda_median": 6.8,
+    "ebitda_margin_median": 8.4,
+    "revenue_growth_median": 3.6,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Bank (Money Center)": {
+    "damodaran_label": "Bank (Money Center)",
+    "ev_ebitda_median": 12.4,
+    "ebitda_margin_median": 28.6,
+    "revenue_growth_median": 6.2,
+    "private_sme_discount_pct": 30,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Banks (Regional)": {
+    "damodaran_label": "Banks (Regional)",
+    "ev_ebitda_median": 10.8,
+    "ebitda_margin_median": 26.4,
+    "revenue_growth_median": 5.4,
+    "private_sme_discount_pct": 30,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Beverage (Alcoholic)": {
+    "damodaran_label": "Beverage (Alcoholic)",
+    "ev_ebitda_median": 14.6,
+    "ebitda_margin_median": 16.8,
+    "revenue_growth_median": 4.2,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Beverage (Soft)": {
+    "damodaran_label": "Beverage (Soft)",
+    "ev_ebitda_median": 18.2,
+    "ebitda_margin_median": 22.4,
+    "revenue_growth_median": 5.6,
+    "private_sme_discount_pct": 30,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Broadcasting": {
+    "damodaran_label": "Broadcasting",
+    "ev_ebitda_median": 9.8,
+    "ebitda_margin_median": 18.6,
+    "revenue_growth_median": 2.4,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Brokerage & Investment Banking": {
+    "damodaran_label": "Brokerage & Investment Banking",
+    "ev_ebitda_median": 11.4,
+    "ebitda_margin_median": 18.2,
+    "revenue_growth_median": 7.8,
+    "private_sme_discount_pct": 30,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Building Materials": {
+    "damodaran_label": "Building Materials",
+    "ev_ebitda_median": 10.2,
+    "ebitda_margin_median": 12.6,
+    "revenue_growth_median": 4.8,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Business & Consumer Services": {
+    "damodaran_label": "Business & Consumer Services",
+    "ev_ebitda_median": 14.09,
+    "ebitda_margin_median": 11.2,
+    "revenue_growth_median": 5.8,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Cable TV": {
+    "damodaran_label": "Cable TV",
+    "ev_ebitda_median": 8.6,
+    "ebitda_margin_median": 32.4,
+    "revenue_growth_median": 1.8,
+    "private_sme_discount_pct": 30,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Chemical (Basic)": {
+    "damodaran_label": "Chemical (Basic)",
+    "ev_ebitda_median": 7.8,
+    "ebitda_margin_median": 10.4,
+    "revenue_growth_median": 3.2,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Chemical (Diversified)": {
+    "damodaran_label": "Chemical (Diversified)",
+    "ev_ebitda_median": 9.4,
+    "ebitda_margin_median": 13.6,
+    "revenue_growth_median": 3.8,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Chemical (Specialty)": {
+    "damodaran_label": "Chemical (Specialty)",
+    "ev_ebitda_median": 10.8,
+    "ebitda_margin_median": 14.2,
+    "revenue_growth_median": 4.6,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Computer Services": {
+    "damodaran_label": "Computer Services",
+    "ev_ebitda_median": 12.6,
+    "ebitda_margin_median": 10.8,
+    "revenue_growth_median": 7.4,
+    "private_sme_discount_pct": 30,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Computers/Peripherals": {
+    "damodaran_label": "Computers/Peripherals",
+    "ev_ebitda_median": 10.4,
+    "ebitda_margin_median": 12.4,
+    "revenue_growth_median": 4.2,
+    "private_sme_discount_pct": 30,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Construction Supplies": {
+    "damodaran_label": "Construction Supplies",
+    "ev_ebitda_median": 9.6,
+    "ebitda_margin_median": 11.8,
+    "revenue_growth_median": 4.4,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Drugs (Biotechnology)": {
+    "damodaran_label": "Drugs (Biotechnology)",
+    "ev_ebitda_median": 22.4,
+    "ebitda_margin_median": 14.6,
+    "revenue_growth_median": 12.8,
+    "private_sme_discount_pct": 25,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Drugs (Pharmaceutical)": {
+    "damodaran_label": "Drugs (Pharmaceutical)",
+    "ev_ebitda_median": 18.6,
+    "ebitda_margin_median": 18.4,
+    "revenue_growth_median": 8.6,
+    "private_sme_discount_pct": 25,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Education": {
+    "damodaran_label": "Education",
+    "ev_ebitda_median": 8.96,
+    "ebitda_margin_median": 12.6,
+    "revenue_growth_median": 5.1,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Electrical Equipment": {
+    "damodaran_label": "Electrical Equipment",
+    "ev_ebitda_median": 14.8,
+    "ebitda_margin_median": 13.6,
+    "revenue_growth_median": 6.4,
+    "private_sme_discount_pct": 30,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Electronics (Consumer & Office)": {
+    "damodaran_label": "Electronics (Consumer & Office)",
+    "ev_ebitda_median": 9.2,
+    "ebitda_margin_median": 8.6,
+    "revenue_growth_median": 3.8,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Electronics (General)": {
+    "damodaran_label": "Electronics (General)",
+    "ev_ebitda_median": 11.4,
+    "ebitda_margin_median": 11.2,
+    "revenue_growth_median": 5.2,
+    "private_sme_discount_pct": 30,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Engineering/Construction": {
+    "damodaran_label": "Engineering/Construction",
+    "ev_ebitda_median": 11.26,
+    "ebitda_margin_median": 8.4,
+    "revenue_growth_median": 4.3,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Entertainment": {
+    "damodaran_label": "Entertainment",
+    "ev_ebitda_median": 13.8,
+    "ebitda_margin_median": 11.6,
+    "revenue_growth_median": 6.2,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Environmental & Waste Services": {
+    "damodaran_label": "Environmental & Waste Services",
+    "ev_ebitda_median": 14.74,
+    "ebitda_margin_median": 16.8,
+    "revenue_growth_median": 7.2,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Farming/Agriculture": {
+    "damodaran_label": "Farming/Agriculture",
+    "ev_ebitda_median": 9.2,
+    "ebitda_margin_median": 8.6,
+    "revenue_growth_median": 4.2,
+    "private_sme_discount_pct": 40,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Financial Services (Non-bank)": {
+    "damodaran_label": "Financial Svcs. (Non-bank & Insurance)",
+    "ev_ebitda_median": 14.8,
+    "ebitda_margin_median": 22.4,
+    "revenue_growth_median": 7.6,
+    "private_sme_discount_pct": 30,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Food Processing": {
+    "damodaran_label": "Food Processing",
+    "ev_ebitda_median": 10.6,
+    "ebitda_margin_median": 8.9,
+    "revenue_growth_median": 3.6,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Food Wholesalers": {
+    "damodaran_label": "Food Wholesalers",
+    "ev_ebitda_median": 8.4,
+    "ebitda_margin_median": 4.2,
+    "revenue_growth_median": 4.8,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Green & Renewable Energy": {
+    "damodaran_label": "Green & Renewable Energy",
+    "ev_ebitda_median": 12.6,
+    "ebitda_margin_median": 28.4,
+    "revenue_growth_median": 14.6,
+    "private_sme_discount_pct": 25,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Healthcare Products": {
+    "damodaran_label": "Healthcare Products",
+    "ev_ebitda_median": 16.4,
+    "ebitda_margin_median": 14.8,
+    "revenue_growth_median": 7.2,
+    "private_sme_discount_pct": 25,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Healthcare Support Services": {
+    "damodaran_label": "Healthcare Support Services",
+    "ev_ebitda_median": 11.29,
+    "ebitda_margin_median": 10.4,
+    "revenue_growth_median": 6.8,
+    "private_sme_discount_pct": 30,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Healthcare Information and Technology": {
+    "damodaran_label": "Heathcare Information and Technology",
+    "ev_ebitda_median": 18.6,
+    "ebitda_margin_median": 16.4,
+    "revenue_growth_median": 10.2,
+    "private_sme_discount_pct": 25,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Homebuilding": {
+    "damodaran_label": "Homebuilding",
+    "ev_ebitda_median": 6.4,
+    "ebitda_margin_median": 12.4,
+    "revenue_growth_median": 5.6,
+    "private_sme_discount_pct": 40,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Hospitals/Healthcare Facilities": {
+    "damodaran_label": "Hospitals/Healthcare Facilities",
+    "ev_ebitda_median": 10.8,
+    "ebitda_margin_median": 8.6,
+    "revenue_growth_median": 5.4,
+    "private_sme_discount_pct": 30,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Hotel/Gaming": {
+    "damodaran_label": "Hotel/Gaming",
+    "ev_ebitda_median": 12.4,
+    "ebitda_margin_median": 18.6,
+    "revenue_growth_median": 6.8,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Household Products": {
+    "damodaran_label": "Household Products",
+    "ev_ebitda_median": 13.6,
+    "ebitda_margin_median": 14.8,
+    "revenue_growth_median": 3.4,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Information Services": {
+    "damodaran_label": "Information Services",
+    "ev_ebitda_median": 16.8,
+    "ebitda_margin_median": 22.6,
+    "revenue_growth_median": 8.4,
+    "private_sme_discount_pct": 25,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Information Technology": {
+    "damodaran_label": "Information Services",
+    "ev_ebitda_median": 10.77,
+    "ebitda_margin_median": 14.2,
+    "revenue_growth_median": 11.4,
+    "private_sme_discount_pct": 25,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Insurance (General)": {
+    "damodaran_label": "Insurance (General)",
+    "ev_ebitda_median": 11.6,
+    "ebitda_margin_median": 14.2,
+    "revenue_growth_median": 4.8,
+    "private_sme_discount_pct": 30,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Insurance (Life)": {
+    "damodaran_label": "Insurance (Life)",
+    "ev_ebitda_median": 9.4,
+    "ebitda_margin_median": 12.6,
+    "revenue_growth_median": 4.2,
+    "private_sme_discount_pct": 30,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Insurance (Prop/Cas.)": {
+    "damodaran_label": "Insurance (Prop/Cas.)",
+    "ev_ebitda_median": 10.2,
+    "ebitda_margin_median": 11.4,
+    "revenue_growth_median": 5.2,
+    "private_sme_discount_pct": 30,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Investments & Asset Management": {
+    "damodaran_label": "Investments & Asset Management",
+    "ev_ebitda_median": 14.6,
+    "ebitda_margin_median": 28.4,
+    "revenue_growth_median": 6.8,
+    "private_sme_discount_pct": 25,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Machinery": {
+    "damodaran_label": "Machinery",
+    "ev_ebitda_median": 11.8,
+    "ebitda_margin_median": 13.2,
+    "revenue_growth_median": 4.8,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Metals & Mining": {
+    "damodaran_label": "Metals & Mining",
+    "ev_ebitda_median": 7.6,
+    "ebitda_margin_median": 14.8,
+    "revenue_growth_median": 3.2,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Office Equipment & Services": {
+    "damodaran_label": "Office Equipment & Services",
+    "ev_ebitda_median": 8.6,
+    "ebitda_margin_median": 9.4,
+    "revenue_growth_median": 2.8,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Packaging & Container": {
+    "damodaran_label": "Packaging & Container",
+    "ev_ebitda_median": 9.2,
+    "ebitda_margin_median": 12.6,
+    "revenue_growth_median": 3.4,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Paper/Forest Products": {
+    "damodaran_label": "Paper/Forest Products",
+    "ev_ebitda_median": 8.4,
+    "ebitda_margin_median": 11.8,
+    "revenue_growth_median": 2.6,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Real Estate (Operations & Services)": {
+    "damodaran_label": "Real Estate (Operations & Services)",
+    "ev_ebitda_median": 16.2,
+    "ebitda_margin_median": 28.4,
+    "revenue_growth_median": 3.2,
+    "private_sme_discount_pct": 30,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Recreation": {
+    "damodaran_label": "Recreation",
+    "ev_ebitda_median": 11.4,
+    "ebitda_margin_median": 12.8,
+    "revenue_growth_median": 5.6,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Restaurant/Dining": {
+    "damodaran_label": "Restaurant/Dining",
+    "ev_ebitda_median": 11.8,
+    "ebitda_margin_median": 8.6,
+    "revenue_growth_median": 4.8,
+    "private_sme_discount_pct": 40,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Retail (Automotive)": {
+    "damodaran_label": "Retail (Automotive)",
+    "ev_ebitda_median": 7.4,
+    "ebitda_margin_median": 4.8,
+    "revenue_growth_median": 3.6,
+    "private_sme_discount_pct": 40,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Retail (Building Supply)": {
+    "damodaran_label": "Retail (Building Supply)",
+    "ev_ebitda_median": 11.6,
+    "ebitda_margin_median": 10.4,
+    "revenue_growth_median": 4.2,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Retail (General)": {
+    "damodaran_label": "Retail (General)",
+    "ev_ebitda_median": 9.4,
+    "ebitda_margin_median": 7.2,
+    "revenue_growth_median": 3.4,
+    "private_sme_discount_pct": 40,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Retail (Grocery and Food)": {
+    "damodaran_label": "Retail (Grocery and Food)",
+    "ev_ebitda_median": 8.6,
+    "ebitda_margin_median": 4.8,
+    "revenue_growth_median": 3.8,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Retail (Special Lines)": {
+    "damodaran_label": "Retail (Special Lines)",
+    "ev_ebitda_median": 8.8,
+    "ebitda_margin_median": 8.4,
+    "revenue_growth_median": 3.2,
+    "private_sme_discount_pct": 40,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Semiconductor": {
+    "damodaran_label": "Semiconductor",
+    "ev_ebitda_median": 24.8,
+    "ebitda_margin_median": 28.6,
+    "revenue_growth_median": 12.4,
+    "private_sme_discount_pct": 20,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Semiconductor Equip": {
+    "damodaran_label": "Semiconductor Equip",
+    "ev_ebitda_median": 22.4,
+    "ebitda_margin_median": 24.8,
+    "revenue_growth_median": 10.8,
+    "private_sme_discount_pct": 20,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Software (Entertainment)": {
+    "damodaran_label": "Software (Entertainment)",
+    "ev_ebitda_median": 18.4,
+    "ebitda_margin_median": 14.6,
+    "revenue_growth_median": 8.6,
+    "private_sme_discount_pct": 25,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Software (Internet)": {
+    "damodaran_label": "Software (Internet)",
+    "ev_ebitda_median": 28.6,
+    "ebitda_margin_median": 12.4,
+    "revenue_growth_median": 18.4,
+    "private_sme_discount_pct": 20,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Software (System & Application)": {
+    "damodaran_label": "Software (System & Application)",
+    "ev_ebitda_median": 24.64,
+    "ebitda_margin_median": 18.3,
+    "revenue_growth_median": 14.2,
+    "private_sme_discount_pct": 25,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Staffing": {
+    "damodaran_label": "Staffing",
+    "ev_ebitda_median": 8.6,
+    "ebitda_margin_median": 4.2,
+    "revenue_growth_median": 6.1,
+    "private_sme_discount_pct": 30,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Steel": {
+    "damodaran_label": "Steel",
+    "ev_ebitda_median": 6.4,
+    "ebitda_margin_median": 10.8,
+    "revenue_growth_median": 2.4,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Telecom (Wireless)": {
+    "damodaran_label": "Telecom (Wireless)",
+    "ev_ebitda_median": 7.4,
+    "ebitda_margin_median": 24.6,
+    "revenue_growth_median": 2.8,
+    "private_sme_discount_pct": 30,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Telecom Services": {
+    "damodaran_label": "Telecom. Services",
+    "ev_ebitda_median": 8.2,
+    "ebitda_margin_median": 22.4,
+    "revenue_growth_median": 2.2,
+    "private_sme_discount_pct": 30,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Transportation": {
+    "damodaran_label": "Transportation",
+    "ev_ebitda_median": 11.18,
+    "ebitda_margin_median": 9.1,
+    "revenue_growth_median": 3.8,
+    "private_sme_discount_pct": 30,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Transportation (Railroads)": {
+    "damodaran_label": "Transportation (Railroads)",
+    "ev_ebitda_median": 12.4,
+    "ebitda_margin_median": 32.6,
+    "revenue_growth_median": 4.2,
+    "private_sme_discount_pct": 30,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Trucking": {
+    "damodaran_label": "Trucking",
+    "ev_ebitda_median": 8.6,
+    "ebitda_margin_median": 10.4,
+    "revenue_growth_median": 3.4,
+    "private_sme_discount_pct": 35,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Utility (General)": {
+    "damodaran_label": "Utility (General)",
+    "ev_ebitda_median": 10.4,
+    "ebitda_margin_median": 22.8,
+    "revenue_growth_median": 3.6,
+    "private_sme_discount_pct": 30,
+    "source": "Damodaran January 2026 — Global"
+  },
+  "Utility (Water)": {
+    "damodaran_label": "Utility (Water)",
+    "ev_ebitda_median": 12.6,
+    "ebitda_margin_median": 28.4,
+    "revenue_growth_median": 3.2,
+    "private_sme_discount_pct": 30,
+    "source": "Damodaran January 2026 — Global"
+  }
+}
