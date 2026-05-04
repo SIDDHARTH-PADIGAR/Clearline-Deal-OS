@@ -96,10 +96,10 @@ EXTRACTION RULES:
 - company.sector: MUST NOT be null. Infer from business description if not explicitly stated. Fall back to 'Business & Consumer Services'.
 - company.founded_year: Search for the following patterns to find the founding year: (1) 'Founded in [year]', (2) 'established in [year]', (3) 'incorporated in [year]', (4) 'since [year]', (5) 'Company was formed in [year]', (6) any 4-digit number between 1970 and 2020 appearing within 10 words of the words 'founded', 'established', 'incorporated', or 'formed'. Extract the 4-digit year. If multiple years are found in these patterns, take the earliest one. Return as a number.
 - ecrm.flags: Scan EVERY section of the document INCLUDING ALL NUMBERED NOTES to the financial statements. Do NOT return CLEAN for any category unless you have explicitly searched the notes section and found no evidence. If the notes section is absent from the document, return severity MEDIUM with evidence 'Notes section not found — manual review required'. Return a flag object for each category:
-  1. related_party_transactions: Any dividend payment to a director or shareholder IS a related party transaction — flag as LOW severity with the amount as evidence. Any transaction between the company and a person connected to a director also qualifies. Look specifically in sections headed 'Notes to the Financial Statements', 'Related Party Transactions', 'Directors Report'.
-  2. director_loans: Search notes for any balance owed to or from directors. Flag if found.
+  1. related_party_transactions: Only flag as LOW if there is explicit documentary evidence in the uploaded document — a direct quote or specific reference (e.g. 'Note 12: Dividends of £120,000 paid to director John Smith'). If no such evidence is found after searching the entire document, return severity CLEAN. Do not flag speculatively. The evidence field must contain the direct quote; if evidence is null, severity must be CLEAN. Any dividend payment to a director or shareholder found in the notes IS a related party transaction.
+  2. director_loans: Only flag as LOW if there is explicit documentary evidence of a director loan balance in the notes to the accounts. The evidence field must contain a direct reference (e.g. 'Note 8: Director loan balance £45,000 outstanding'). If no evidence is found, return severity CLEAN. Do not flag speculatively.
   3. hmrc_tax: Search for any mention of HMRC, tax settlement, tax dispute, enquiry, investigation, or penalty.
-  4. revenue_spike: Compare current year revenue to prior year — if growth exceeds 25% year on year, flag as LOW with the growth percentage as evidence and note 'verify whether growth is sustainable or pre-sale window dressing'.
+  4. revenue_spike: Calculate year-on-year revenue growth from the financial data. Growth between 0–25% is normal trading — return CLEAN. Growth above 25% warrants investigation: flag as LOW with the exact growth percentage as evidence and note 'verify whether growth is sustainable or pre-sale window dressing'. Growth above 50% year-on-year should return MEDIUM severity.
   5. beneficial_ownership: Flag if beneficial owners are not clearly identified in the document.
   6. regulatory: Flag if any regulatory investigations or legal proceedings are mentioned anywhere in the document.
   7. companies_house: Companies House filing discrepancies — check if accounts filing dates match and no overdue filings are mentioned.
@@ -202,10 +202,15 @@ function validateExtraction(data) {
 // ─── Scoring ──────────────────────────────────────────────────────────────────
 function computeScores(data) {
   const sector = (data.company?.sector || '').toLowerCase();
-  const sectorFit = sector.includes('b2b') || sector.includes('services') || sector.includes('facilities') || sector.includes('itad') ? 80
-    : sector.includes('tech') || sector.includes('software') || sector.includes('saas') ? 70
-    : sector.includes('manufacturing') || sector.includes('logistics') ? 60
-    : 45;
+  // Sector fit: baseline 70 for any mapped Damodaran sector, adjust up/down by category type
+  // Penalty sectors explicitly outside acquisition thesis
+  const offThesisSectors = ['manufacturing', 'agriculture', 'oil', 'gas', 'mining', 'fishing', 'forestry'];
+  const premiumSectors   = ['b2b', 'business & consumer', 'software', 'technology services', 'professional services',
+                            'it services', 'managed services', 'consulting', 'saas', 'facilities', 'itad', 'recycling',
+                            'healthcare support', 'human resources', 'staffing'];
+  const isOffThesis   = offThesisSectors.some(t => sector.includes(t));
+  const isPremium     = premiumSectors.some(t => sector.includes(t));
+  const sectorFit     = isOffThesis ? 35 : isPremium ? 80 : 70;  // 70 = mapped but neutral; 80 = on-thesis; 35 = off-thesis
 
   const margin = data.financials?.ebitda_margin_pct;
   const ebitdaQuality = margin == null ? 40 : margin > 20 ? 85 : margin > 12 ? 65 : 40;
