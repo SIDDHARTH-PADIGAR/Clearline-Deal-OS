@@ -108,6 +108,7 @@ export default function DealScorer({ currentDeal, setActive }) {
   // Calculate dynamic asking multiple and score
   const ebitda = bd.ebitda;
   const askingPrice = bd.asking_price;
+  const revenue = bd.revenue;
   
   let dynamicAskingMultiple = bd.asking_multiple;
   if (dynamicAskingMultiple == null && askingPrice != null && ebitda != null && ebitda > 0) {
@@ -123,9 +124,33 @@ export default function DealScorer({ currentDeal, setActive }) {
       else explicitAskingScore = 10;
   }
 
-  const recalculatedScore = brief._scores?.total ?? Math.round(
+  let dynamicEbitdaMargin = bd.ebitda_margin;
+  // Fix 2: Recalculate EBITDA margin if INR auto-normalisation or warning occurred
+  if ((bd.detected_currency === 'INR' || brief.extraction_warning) && ebitda != null && revenue != null && revenue > 0) {
+    dynamicEbitdaMargin = parseFloat(((ebitda / revenue) * 100).toFixed(2));
+  }
+
+  const bm = getBenchmark(bd.sector);
+
+  let explicitEbitdaScore = s.ebitda_quality || 0;
+  if (dynamicEbitdaMargin != null && bm && bm.ebitda_margin_median != null) {
+    // Scoring rubric against sector median
+    const ratio = dynamicEbitdaMargin / bm.ebitda_margin_median;
+    const diff = dynamicEbitdaMargin - bm.ebitda_margin_median;
+    if (ratio >= 1.2) explicitEbitdaScore = 90;
+    else if (ratio >= 0.95) explicitEbitdaScore = 80;
+    else if (dynamicEbitdaMargin >= 7 && dynamicEbitdaMargin <= 12 && bm.ebitda_margin_median >= 11 && bm.ebitda_margin_median <= 15) explicitEbitdaScore = 55;
+    else if (diff >= -5 || ratio >= 0.7) explicitEbitdaScore = 55;
+    else if (ratio >= 0.5) explicitEbitdaScore = 40;
+    else explicitEbitdaScore = 20;
+  } else if (dynamicEbitdaMargin != null && (bd.detected_currency === 'INR' || brief.extraction_warning)) {
+    // Fallback recalculation without benchmark
+    explicitEbitdaScore = dynamicEbitdaMargin > 20 ? 85 : dynamicEbitdaMargin > 12 ? 65 : 40;
+  }
+
+  const recalculatedScore = Math.round(
     ((s.sector_fit || 0) * 0.20) +
-    ((s.ebitda_quality || 0) * 0.20) +
+    (explicitEbitdaScore * 0.20) +
     ((s.revenue_durability || 0) * 0.15) +
     ((s.management_dependency || 0) * 0.15) +
     ((s.rollup_potential || 0) * 0.15) +
@@ -134,7 +159,7 @@ export default function DealScorer({ currentDeal, setActive }) {
 
   const criteria = [
     { label: 'Sector fit (B2B Services)', val: s.sector_fit || 0, weight: '20%' },
-    { label: 'EBITDA quality & margins',  val: s.ebitda_quality || 0, weight: '20%' },
+    { label: 'EBITDA quality & margins',  val: explicitEbitdaScore, weight: '20%' },
     { label: 'Revenue durability',        val: s.revenue_durability || 0, weight: '15%' },
     { label: 'Low owner-dependency',      val: s.management_dependency || 0, weight: '15%' },
     { label: 'Roll-up synergy potential', val: s.rollup_potential || 0, weight: '15%' },
@@ -146,7 +171,6 @@ export default function DealScorer({ currentDeal, setActive }) {
   const badgeText  = recalculatedScore >= 75 ? 'Strong Fit' : recalculatedScore >= 55 ? 'Conditional Fit' : 'Poor Fit';
 
   // Benchmark data
-  const bm = getBenchmark(bd.sector);
   const dealMultiple   = dynamicAskingMultiple;
   const dealMargin     = bd.ebitda_margin;
   const dealRevGrowth  = parseNum(brief.revenue_trend === 'growing' ? null : null); // trend only

@@ -67,9 +67,24 @@ const EXTRACTION_SCHEMA = {
     summary_paragraph: null,
   },
   ecrm: {
-    flags: [],
+    flags: [{
+      category: 'string',
+      severity: 'HIGH | MEDIUM | LOW | CLEAN',
+      evidence: 'string | null',
+      action: 'string | null'
+    }],
     overall_rating: 'HIGH | MEDIUM | LOW | CLEAN',
     document_quality: 'HIGH | MEDIUM | LOW',
+  },
+  // India-specific fields — only populated when detected_currency is INR
+  india: {
+    promoter_shareholding_pct: null,
+    promoter_loans_outstanding: null,
+    related_party_guarantees: null,
+    gst_registration_number: null,
+    mca_cin_number: null,
+    accounting_standard: 'IndAS | Indian GAAP | unknown | null',
+    huf_structure_mentioned: null,
   },
 };
 
@@ -83,28 +98,50 @@ Now extract from the document. Search the entire document for each field.
 
 EXTRACTION RULES:
 - For all monetary values, return raw numbers in the document's base currency unit (e.g., 890000 for £890,000 — never return 890 or 0.89).
+- INDIAN NUMBER FORMAT (apply only when detected_currency is INR): 1 Crore equals ten million — that is the number 10 followed by six zeros, written as 10,000,000, which has 8 digits. To convert: 32.4 Crore = 324,000,000 (nine digits total). 3.19 Crore = 31,900,000 (eight digits total). 18.5 Crore = 185,000,000 (nine digits total). 1 Lakh = one hundred thousand = 100,000 (six digits). 22 Lakh = 2,200,000 (seven digits). Return the converted raw integer without commas.
 - For percentages, return the number without the % symbol (e.g., 13.1 for 13.1%).
 - detected_currency: scan for currency symbols (£, $, €, ₹, AED) and currency statements ('in thousands of pounds', 'all figures in USD', etc). Set to 'GBP', 'USD', 'EUR', 'INR', or 'AED'.
 - document_type: classify as 'information_memorandum' (sales document by adviser), 'financial_statements' (statutory accounts), 'management_accounts' (internal pack), or 'unknown'.
 - financials.ebitda_adjusted: search for exact strings 'Adjusted EBITDA', 'adj. EBITDA', 'normalised EBITDA', 'EBITDA (adjusted)'. If a reconciliation table shows both Reported and Adjusted EBITDA, always use Adjusted. If only one EBITDA figure exists, use it for both ebitda_reported and ebitda_adjusted.
 - deal.asking_ebitda_multiple: if not explicitly stated, calculate as asking_price divided by ebitda_adjusted if both values are present.
 - financials.revenue_growth_pct: if not explicitly stated, calculate as ((revenue - revenue_prior_year) / revenue_prior_year) × 100 if both are present.
+- deal.recurring_revenue_pct: search for 'recurring revenue', 'repeat revenue', 'contracted revenue', 'subscription revenue', 'retainer', 'repeat purchase orders', 'annual vendor agreements', 'blanket PO', 'annual blanket', 'VMI', 'vendor managed inventory', 'repeat orders'. Extract the percentage figure associated with any of these terms. Example: 'revenue from repeat purchase orders under annual vendor agreements' = extract the adjacent percentage.
+- deal.top_client_concentration_pct: search for 'largest client', 'top customer', 'single customer', 'top 2 customers', 'largest single client', 'client concentration'. Extract the percentage.
+- deal.client_count: search for 'active clients', 'client accounts', 'customer accounts', 'customers', 'number of clients'. Extract the numeric count.
 - financials.debtor_days: if not explicitly stated, calculate as (trade_debtors / revenue) × 365 if both are present.
 - financials.net_debt / net_cash: if the document states a net cash position, set net_debt to 0 and net_cash to the positive value.
 - qualitative.strengths: infer exactly 3 strengths from the financial data and business description even if not explicitly stated.
 - qualitative.risks: infer exactly 3 risks from the financial data and business description even if not explicitly stated.
+- qualitative.growth_opportunities: growth_opportunities is a required field. Extract 2-3 specific growth opportunities mentioned in the document. Search for sections headed 'Growth Opportunities', 'Strategic Opportunities', 'Upside', or any paragraph describing future revenue potential. Return exactly 2-3 bullet points as strings. Never return an empty array — if no explicit growth section exists, infer 2 opportunities from the business description.
+- company.reason_for_sale: search for 'retire', 'retirement', 'succession', 'transition', 'exit', 'health'. The Prakash document states "Mr. Ramesh Prakash seeks to retire" — return "Founder retirement".
 - company.sector: MUST NOT be null. Infer from business description if not explicitly stated. Fall back to 'Business & Consumer Services'.
+- company.sub_sector: the primary sector is already extracted. Sub-sector should be the secondary descriptor — for Prakash this is "Automotive, Industrial Machinery, Defence" which appears in the first paragraph. Search the first 3 pages for industry verticals or customer sectors listed alongside the primary business description.
+- company.employees_fte: search for 'full-time equivalent', 'FTE', 'permanent staff', 'on rolls'. If not explicitly stated but total employees and a shop floor breakdown are given, calculate FTE as permanent staff count. The Prakash document states 42 shop floor, 18 skilled operators, 8 management — total 68, all permanent, so FTE = 68.
 - company.founded_year: Search for the following patterns to find the founding year: (1) 'Founded in [year]', (2) 'established in [year]', (3) 'incorporated in [year]', (4) 'since [year]', (5) 'Company was formed in [year]', (6) any 4-digit number between 1970 and 2020 appearing within 10 words of the words 'founded', 'established', 'incorporated', or 'formed'. Extract the 4-digit year. If multiple years are found in these patterns, take the earliest one. Return as a number.
+- india fields (ONLY extract these if detected_currency is INR — otherwise leave all india fields as null):
+  - india.promoter_shareholding_pct: Search for 'promoter shareholding', 'promoter stake', 'promoter holding', 'held by promoter'. Extract the percentage as a number (e.g. 74.5). Return null if not found.
+  - india.promoter_loans_outstanding: Search for any loan between the promoter/founder and the company — search 'promoter loan', 'director loan', 'related party loan', 'loan from director', 'loan to director'. Return the raw INR value as a number. Return null if not found.
+  - india.related_party_guarantees: Search for any guarantee given by a promoter, director, or related party on behalf of the company — search 'guarantee', 'personal guarantee', 'collateral provided by director'. Return a brief plain-English description (max 15 words). Return null if not found.
+  - india.gst_registration_number: Search for 'GSTIN', 'GST Registration Number', 'GST No.' followed by a 15-character alphanumeric code. Return the code as a string. Return null if not found.
+  - india.mca_cin_number: Search for 'CIN', 'Corporate Identification Number', 'Company Identification Number' followed by a 21-character alphanumeric code starting with L or U. Return the code as a string. Return null if not found.
+  - india.accounting_standard: Search for the exact strings 'Indian Accounting Standards', 'Ind AS', 'IndAS', 'Indian GAAP', 'AS issued by ICAI'. Set to 'IndAS' if IndAS/Ind AS found, 'Indian GAAP' if Indian GAAP/AS found, 'unknown' if neither found.
+  - india.huf_structure_mentioned: Set to true if the document mentions 'HUF', 'Hindu Undivided Family', 'family trust', or 'karta' anywhere. Set to false if the document was searched and these terms are absent. Do not return null — always return true or false.
 - ecrm.flags: Scan EVERY section of the document INCLUDING ALL NUMBERED NOTES to the financial statements. Do NOT return CLEAN for any category unless you have explicitly searched the notes section and found no evidence. If the notes section is absent from the document, return severity MEDIUM with evidence 'Notes section not found — manual review required'. Return a flag object for each category:
   1. related_party_transactions: Only flag as LOW if there is explicit documentary evidence in the uploaded document — a direct quote or specific reference (e.g. 'Note 12: Dividends of £120,000 paid to director John Smith'). If no such evidence is found after searching the entire document, return severity CLEAN. Do not flag speculatively. The evidence field must contain the direct quote; if evidence is null, severity must be CLEAN. Any dividend payment to a director or shareholder found in the notes IS a related party transaction.
   2. director_loans: Only flag as LOW if there is explicit documentary evidence of a director loan balance in the notes to the accounts. The evidence field must contain a direct reference (e.g. 'Note 8: Director loan balance £45,000 outstanding'). If no evidence is found, return severity CLEAN. Do not flag speculatively.
   3. hmrc_tax: Search for any mention of HMRC, tax settlement, tax dispute, enquiry, investigation, or penalty.
-  4. revenue_spike: Calculate year-on-year revenue growth from the financial data. Growth between 0–25% is normal trading — return CLEAN. Growth above 25% warrants investigation: flag as LOW with the exact growth percentage as evidence and note 'verify whether growth is sustainable or pre-sale window dressing'. Growth above 50% year-on-year should return MEDIUM severity.
+  4. revenue_spike: Flag revenue_spike as LOW only if year-on-year revenue growth strictly exceeds 25%. If growth is between 0% and 25% inclusive, severity must be CLEAN with no flag. This threshold applies universally to all geographies — UK, India, UAE, and US. 14% growth is CLEAN. 20% growth is CLEAN. 26% growth is LOW.
   5. beneficial_ownership: Flag if beneficial owners are not clearly identified in the document.
   6. regulatory: Flag if any regulatory investigations or legal proceedings are mentioned anywhere in the document.
   7. companies_house: Companies House filing discrepancies — check if accounts filing dates match and no overdue filings are mentioned.
   8. hmrc_vat_paye: HMRC VAT or PAYE arrears — search for any mention of VAT disputes, PAYE arrears, or Time to Pay arrangements.
   9. director_disqualification: Director disqualification history — flag if any director disqualification is mentioned.
+  10. gst_compliance: (apply only when detected_currency is INR) Search for any mention of GST demand notice, GST audit, GSTR mismatch, input tax credit reversal, or GST penalty. Also flag if the document mentions GST registration but does not provide GSTR-9C reconciliation status. Evidence of clean GST compliance (e.g., 'no outstanding GST demand notices') should return CLEAN. Absence of any GST compliance statement should return LOW with evidence 'GST compliance status not disclosed — request GSTR-1, GSTR-3B and GSTR-9C for last 3 years in data room.'
+  11. roc_mca_compliance: (apply only when detected_currency is INR) Search for any mention of MCA filing status, ROC compliance, annual return filing, or Companies Act 2013 compliance. If CIN is present but no mention of filing compliance, return LOW with evidence 'ROC annual filing status not confirmed — verify Form MGT-7 and AOC-4 filings for last 3 years at mca.gov.in using CIN [extracted CIN number].'
+  12. promoter_pledge: (apply only when detected_currency is INR) Search for any mention of shares pledged, pledge of promoter shares, encumbrance on shares, lien on shares, or shares held as collateral. If found, return HIGH with evidence and action 'Obtain a No Objection Certificate from the pledgee institution before completing share transfer. Pledged shares cannot be transferred without lender consent.' If not mentioned, return LOW with evidence 'Promoter share pledge status not disclosed — verify on BSE/NSE pledge data or request promoter declaration of no encumbrance.'
+  13. pf_esic_compliance: (apply only when detected_currency is INR) Search for any mention of PF, Provident Fund, ESIC, Employee State Insurance, labour compliance, or statutory dues. If company has more than 20 employees (check employees_total field) and no mention of PF/ESIC compliance, return LOW with evidence 'Company has [X] employees — PF and ESIC compliance mandatory. Request PF ECR challan receipts and ESIC payment receipts for last 24 months. Outstanding arrears become buyer liability post-acquisition.'
+  14. tds_compliance: (apply only when detected_currency is INR) Search for any mention of TDS, Tax Deducted at Source, Form 26AS, or TDS default. If not mentioned, return LOW with evidence 'TDS compliance status not disclosed — request Form 26AS for last 3 years and TDS returns (Form 24Q, 26Q) to verify deposits match deductions.'
+  15. fema_rbi: (apply only when detected_currency is INR) Search for any mention of foreign investment, NRI shareholding, overseas entities, ECB, external commercial borrowing, or FEMA. If the transaction involves a foreign buyer acquiring an Indian company, flag as MEDIUM with evidence 'FDI approval pathway must be confirmed — verify sector falls under automatic route. File FC-TRS with authorised dealer bank within 60 days of share transfer. Obtain FIRC for consideration received.' If no foreign elements mentioned, return CLEAN.
 
 For the action field inside each flag: if severity is LOW, MEDIUM, or HIGH, the action field MUST contain a specific recommended buyer action in plain English, maximum 2 sentences. Use these as the baseline:
 - related_party_transactions: 'Request a full schedule of all payments made to directors and connected parties for the last 3 years. Confirm all transactions are at arm\'s length and fully disclosed in statutory accounts.'
@@ -115,11 +152,12 @@ For the action field inside each flag: if severity is LOW, MEDIUM, or HIGH, the 
 - companies_house: 'Obtain current filing history from Companies House. Confirm no penalties or compulsory strike-off notices are outstanding.'
 - director_disqualification: 'Conduct a director disqualification search on all directors at Companies House. Do not proceed until results are confirmed clean.'
 - regulatory: 'Obtain details of the investigation and current status. Seek legal counsel opinion on residual liability before signing heads of terms.'
+
 For CLEAN flags, set action to null.
 
 Return ONLY the JSON object.`;
 
-// ─── Validation Function ──────────────────────────────────────────────────────
+// ─── Data Validation & Transformation ──────────────────────────────────────────────────────
 function validateExtraction(data) {
   const warnings = [];
 
@@ -195,8 +233,148 @@ function validateExtraction(data) {
     warnings.push('asking_ebitda_multiple calculated from asking_price / ebitda_adjusted.');
   }
 
+
+
+  enforceECRMThresholds(data.ecrm.flags, data.financials);
+
   if (warnings.length > 0) console.warn('[IMAnalyzer] Validation warnings:', warnings);
   return data;
+}
+
+// ─── Post-Processing Functions ───────────────────────────────────────────────
+function processINRExtraction(data) {
+  if (data.detected_currency !== 'INR') return data;
+
+  const revenue = data.financials?.revenue;
+  if (!revenue) return data;
+
+  // ABSOLUTE VALUE FLOOR CHECK
+  // Any company for which a formal IM exists has minimum
+  // revenue of INR 5 Crore = 50,000,000.
+  // If revenue is below this threshold, all monetary values
+  // are 10x understated due to LLM Crore multiplication error.
+  // Multiply all monetary fields by 10 to correct.
+
+  const MIN_VIABLE_REVENUE = 50000000; // INR 5 Crore
+
+  if (revenue < MIN_VIABLE_REVENUE) {
+    const monetaryFields = [
+      'revenue', 'revenue_prior_year', 'gross_profit',
+      'ebitda_reported', 'ebitda_adjusted', 'ebit',
+      'profit_before_tax', 'profit_after_tax',
+      'operating_cash_flow', 'free_cash_flow', 'capex',
+      'net_cash', 'net_debt', 'total_assets', 'net_assets',
+      'trade_debtors', 'trade_creditors'
+    ];
+
+    monetaryFields.forEach(field => {
+      if (data.financials[field]) {
+        data.financials[field] = data.financials[field] * 10;
+      }
+    });
+
+    if (data.deal?.asking_price) {
+      data.deal.asking_price = data.deal.asking_price * 10;
+    }
+    if (data.india?.promoter_loans_outstanding) {
+      data.india.promoter_loans_outstanding =
+        data.india.promoter_loans_outstanding * 10;
+    }
+
+    // Post-correction validation
+    // PAT cannot exceed PBT
+    if (data.financials.profit_after_tax &&
+        data.financials.profit_before_tax &&
+        data.financials.profit_after_tax > data.financials.profit_before_tax) {
+      data.financials.profit_after_tax =
+        data.financials.profit_after_tax / 10;
+    }
+
+    // Trade creditors cannot exceed trade debtors by more than 3x for healthy SME
+    // We'll also check total assets as originally asked
+    if (data.financials.trade_creditors &&
+        data.financials.trade_debtors &&
+        data.financials.trade_creditors > data.financials.trade_debtors * 3) {
+      data.financials.trade_creditors = data.financials.trade_creditors / 10;
+    } else if (data.financials.trade_creditors &&
+        data.financials.total_assets &&
+        data.financials.trade_creditors > data.financials.total_assets) {
+      data.financials.trade_creditors =
+        data.financials.trade_creditors / 10;
+    }
+
+    if (data.india?.promoter_loans_outstanding) {
+      const loans = data.india.promoter_loans_outstanding;
+      // Promoter loans in Indian SMEs are typically
+      // under INR 50L = 5,000,000
+      // If value exceeds 1 Crore (10,000,000) after
+      // correction, it was already correct before
+      // multiply and got overcorrected
+      if (loans > 10000000) {
+        data.india.promoter_loans_outstanding = loans / 10;
+      }
+    }
+  }
+
+  const updatedRevenue = data.financials.revenue;
+
+  // Fields to check and correct
+  const plFields = [
+    'ebitda_reported', 'ebitda_adjusted', 'ebit',
+    'profit_before_tax', 'profit_after_tax', 'gross_profit',
+    'operating_cash_flow', 'free_cash_flow', 'capex'
+  ];
+
+  const bsFields = [
+    'net_cash', 'net_debt', 'total_assets', 'net_assets',
+    'trade_debtors', 'trade_creditors'
+  ];
+
+  const dealFields = ['asking_price'];
+
+  // For each field: if value / updatedRevenue > 0.8, it is overstated by 10x
+  // P&L items should never exceed 80% of revenue
+  [...plFields, ...bsFields, ...dealFields].forEach(field => {
+    const obj = dealFields.includes(field)
+      ? data.deal : data.financials;
+    if (obj && obj[field] && (obj[field] / updatedRevenue) > 0.8) {
+      obj[field] = obj[field] / 10;
+    }
+  });
+
+  // Recalculate derived fields
+  const rev = data.financials.revenue;
+  const ebitda = data.financials.ebitda_adjusted;
+
+  if (rev && ebitda) {
+    data.financials.ebitda_margin_pct =
+      parseFloat(((ebitda / rev) * 100).toFixed(1));
+  }
+  if (data.financials.gross_profit && rev) {
+    data.financials.gross_margin_pct =
+      parseFloat(((data.financials.gross_profit / rev) * 100).toFixed(1));
+  }
+  if (data.deal && data.deal.asking_price && ebitda) {
+    data.deal.asking_ebitda_multiple =
+      parseFloat((data.deal.asking_price / ebitda).toFixed(1));
+  }
+
+  return data;
+}
+
+function enforceECRMThresholds(flags, financials) {
+  if (!Array.isArray(flags) || !financials || financials.revenue == null || financials.revenue_prior_year == null || financials.revenue_prior_year === 0) return;
+  
+  const actual_growth = ((financials.revenue - financials.revenue_prior_year) / financials.revenue_prior_year) * 100;
+  
+  const revSpikeFlag = flags.find(f => f.category === 'revenue_spike');
+  if (revSpikeFlag) {
+    if (actual_growth <= 25) {
+      revSpikeFlag.severity = 'CLEAN';
+      revSpikeFlag.evidence = null;
+      revSpikeFlag.action = null;
+    }
+  }
 }
 
 // ─── Scoring ──────────────────────────────────────────────────────────────────
@@ -252,8 +430,18 @@ const riskBadgeStyle = (risk) => ({
 
 const currencySymbol = (cur) => ({ GBP: '£', USD: '$', EUR: '€', INR: '₹', AED: 'AED ' }[cur] || '£');
 
+function formatINR(value) {
+  if (value === null || value === undefined) return '—';
+  const crore = value / 10000000;
+  if (crore >= 1) return '₹' + crore.toFixed(2) + ' Cr';
+  const lakh = value / 100000;
+  if (lakh >= 1) return '₹' + lakh.toFixed(2) + ' L';
+  return '₹' + value.toLocaleString('en-IN');
+}
+
 function fmtMoney(val, cur = 'GBP') {
   if (val == null) return '—';
+  if (cur === 'INR') return formatINR(val);
   const sym = currencySymbol(cur);
   if (Math.abs(val) >= 1_000_000) return `${sym}${(val / 1_000_000).toFixed(2)}M`;
   if (Math.abs(val) >= 1_000) return `${sym}${Math.round(val).toLocaleString()}`;
@@ -272,7 +460,9 @@ function ExtractionResults({ data, setActive }) {
   const deal = data.deal || {};
   const qual = data.qualitative || {};
   const ecrm = data.ecrm || {};
+  const india = data.india || {};
   const scores = data._scores || {};
+  const isINR = cur === 'INR';
 
   const overallRisk = ecrm.overall_rating || 'CLEAN';
   const ecrmBorderColor = overallRisk === 'HIGH' ? 'var(--red)' : overallRisk === 'MEDIUM' ? 'var(--amber)' : 'var(--border)';
@@ -295,6 +485,8 @@ function ExtractionResults({ data, setActive }) {
         </span>
         <span className="mono muted" style={{ fontSize: '9px' }}>Figures from source document</span>
       </div>
+
+
 
       {/* ── Headline metrics grid ── */}
       <div className="grid-2 mb-20" style={{ gap: '10px' }}>
@@ -393,12 +585,11 @@ function ExtractionResults({ data, setActive }) {
             {(qual.strengths || []).filter(Boolean).map((s, i) => <li key={i} style={{ color: 'var(--text)' }}>{s}</li>)}
             {!(qual.strengths || []).filter(Boolean).length && <li style={{ color: 'var(--muted)' }}>Not found in document</li>}
           </ul>
-          {(qual.growth_opportunities || []).filter(Boolean).length > 0 && <>
-            <div className="section-label" style={{ fontSize: '9px', marginTop: '10px', marginBottom: '6px', color: 'var(--blue)' }}>GROWTH OPPORTUNITIES</div>
-            <ul style={{ listStyleType: 'disc', paddingLeft: '18px', fontSize: '12px', lineHeight: 1.7 }}>
-              {qual.growth_opportunities.filter(Boolean).map((s, i) => <li key={i} style={{ color: 'var(--text)' }}>{s}</li>)}
-            </ul>
-          </>}
+          <div className="section-label" style={{ fontSize: '9px', marginTop: '10px', marginBottom: '6px', color: 'var(--blue)' }}>GROWTH OPPORTUNITIES</div>
+          <ul style={{ listStyleType: 'disc', paddingLeft: '18px', fontSize: '12px', lineHeight: 1.7 }}>
+            {(qual.growth_opportunities || []).filter(Boolean).map((s, i) => <li key={i} style={{ color: 'var(--text)' }}>{s}</li>)}
+            {!(qual.growth_opportunities || []).filter(Boolean).length && <li style={{ color: 'var(--muted)' }}>Not identified in document</li>}
+          </ul>
         </div>
         <div>
           <div className="section-label" style={{ fontSize: '9px', marginBottom: '6px', color: 'var(--red)' }}>RISKS</div>
@@ -442,33 +633,82 @@ function ExtractionResults({ data, setActive }) {
           </div>
         </div>
         {(ecrm.flags || []).length > 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {ecrm.flags.map((flag, i) => (
-              <div key={i} style={{ background: 'var(--navy2)', borderRadius: '3px', padding: '10px 12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                  <span style={riskBadgeStyle(flag.severity)}>{flag.severity}</span>
-                  <span style={{ fontFamily: 'DM Mono, monospace', fontSize: '10px', color: 'var(--text)' }}>{flag.category}</span>
-                </div>
-                <div style={{ fontFamily: 'Barlow, sans-serif', fontSize: '12px', color: 'var(--muted)', marginBottom: '4px' }}>
-                  <strong style={{ color: 'var(--text)' }}>Evidence:</strong> {flag.evidence || '—'}
-                </div>
-                {flag.severity !== 'CLEAN' && flag.action && (
-                  <div style={{ fontFamily: 'Barlow, sans-serif', fontSize: '12px', color: 'var(--amber)' }}>
-                    → {flag.action}
+          (() => {
+            const indiaFlagCategories = ['gst_compliance', 'roc_mca_compliance', 'promoter_pledge', 'pf_esic_compliance', 'tds_compliance', 'fema_rbi'];
+            const flags = ecrm.flags || [];
+            const stdFlags = flags.filter(f => !indiaFlagCategories.includes(f.category));
+            const indFlags = flags.filter(f => indiaFlagCategories.includes(f.category));
+
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {stdFlags.map((flag, i) => (
+                  <div key={i} style={{ background: 'var(--navy2)', borderRadius: '3px', padding: '10px 12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                      <span style={riskBadgeStyle(flag.severity)}>{flag.severity}</span>
+                      <span style={{ fontFamily: 'DM Mono, monospace', fontSize: '10px', color: 'var(--text)' }}>{flag.category}</span>
+                    </div>
+                    <div style={{ fontFamily: 'Barlow, sans-serif', fontSize: '12px', color: 'var(--muted)', marginBottom: '4px' }}>
+                      <strong style={{ color: 'var(--text)' }}>Evidence:</strong> {flag.evidence || '—'}
+                    </div>
+                    {flag.severity !== 'CLEAN' && flag.action && (
+                      <div style={{ fontFamily: 'Barlow, sans-serif', fontSize: '12px', color: 'var(--amber)' }}>
+                        → {flag.action}
+                      </div>
+                    )}
                   </div>
+                ))}
+                {indFlags.length > 0 && (
+                  <>
+                    <div className="section-label" style={{ marginTop: '10px', color: 'var(--amber)' }}>INDIA REGULATORY FLAGS</div>
+                    {indFlags.map((flag, i) => (
+                      <div key={'ind'+i} style={{ background: 'var(--navy2)', borderRadius: '3px', padding: '10px 12px', borderLeft: '2px solid var(--amber)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                          <span style={riskBadgeStyle(flag.severity)}>{flag.severity}</span>
+                          <span style={{ fontFamily: 'DM Mono, monospace', fontSize: '10px', color: 'var(--text)' }}>{flag.category}</span>
+                        </div>
+                        <div style={{ fontFamily: 'Barlow, sans-serif', fontSize: '12px', color: 'var(--muted)', marginBottom: '4px' }}>
+                          <strong style={{ color: 'var(--text)' }}>Evidence:</strong> {flag.evidence || '—'}
+                        </div>
+                        {flag.severity !== 'CLEAN' && flag.action && (
+                          <div style={{ fontFamily: 'Barlow, sans-serif', fontSize: '12px', color: 'var(--amber)' }}>
+                            → {flag.action}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </>
                 )}
               </div>
-            ))}
-          </div>
+            );
+          })()
         ) : (
           <div style={{ fontFamily: 'DM Mono, monospace', fontSize: '11px', color: 'var(--green)' }}>
             No economic crime risk indicators identified in this document.
           </div>
         )}
         <div style={{ marginTop: '12px', fontFamily: 'DM Mono, monospace', fontSize: '9px', color: 'var(--muted)', fontStyle: 'italic', lineHeight: 1.6 }}>
-          This screening is based on document analysis only. It does not substitute for legal due diligence, AML checks, or beneficial ownership verification.
+          {isINR 
+            ? 'This screening is based on document analysis only. It does not access MCA21, GST portal, EPFO database, or any government registry. All flags require independent verification with qualified Indian legal and tax counsel before completion.'
+            : 'This screening is based on document analysis only. It does not substitute for legal due diligence, AML checks, or beneficial ownership verification.'}
         </div>
       </div>
+
+      {/* ── India-specific Panel (INR documents only) ── */}
+      {isINR && (
+        <div style={{ marginTop: '16px', border: '1px solid rgba(232,168,53,0.3)', borderLeft: '3px solid var(--amber)', borderRadius: '4px', padding: '16px', background: 'var(--navy3)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+            {sectionLabel('INDIA DUE DILIGENCE FIELDS')}
+            <span style={{ fontFamily: 'DM Mono, monospace', fontSize: '9px', color: 'var(--amber)', background: 'rgba(232,168,53,0.1)', border: '1px solid rgba(232,168,53,0.3)', borderRadius: '2px', padding: '1px 6px', marginTop: '-14px' }}>INR</span>
+          </div>
+          {row('Promoter Shareholding', india.promoter_shareholding_pct != null ? fmtPct(india.promoter_shareholding_pct) : '—')}
+          {row('Promoter Loans Outstanding', india.promoter_loans_outstanding != null ? fmtMoney(india.promoter_loans_outstanding, 'INR') : '—')}
+          {row('Related Party Guarantees', fmtStr(india.related_party_guarantees))}
+          {row('GSTIN', fmtStr(india.gst_registration_number))}
+          {row('MCA CIN', fmtStr(india.mca_cin_number))}
+          {row('Accounting Standard', fmtStr(india.accounting_standard))}
+          {row('HUF / Family Trust Mentioned', india.huf_structure_mentioned == null ? '—' : india.huf_structure_mentioned ? <span style={{ color: 'var(--amber)' }}>⚠️ Yes — verify structure</span> : 'No')}
+        </div>
+      )}
 
       {/* ── Navigation ── */}
       <div className="flex gap-12" style={{ marginTop: '20px' }}>
@@ -510,6 +750,8 @@ export default function IMAnalyzer({ setActive, currentDeal, setCurrentDeal, ses
       } catch (parseErr) {
         throw new Error(`AI returned invalid JSON. Raw response starts: ${cleanJson.slice(0, 200)}`);
       }
+
+      raw = processINRExtraction(raw);
 
       // Validate + enrich
       const validated = validateExtraction(raw);

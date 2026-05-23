@@ -21,7 +21,7 @@
   "Financial Services": "Financial Services (Non-bank)",
   "Insurance": "Insurance (General)",
   "Real Estate": "Real Estate (Operations & Services)",
-  "Manufacturing": "Industrial Services",
+  "Manufacturing": "Machinery",
   "Food & Beverage": "Food Processing",
   "Retail": "Retail (General)",
   "Media": "Entertainment",
@@ -66,5 +66,17 @@
   "recruitment": "Human Resources",
   "staffing": "Human Resources",
   "construction": "Engineering/Construction",
-  "property management": "Real Estate (Operations & Services)"
+  "property management": "Real Estate (Operations & Services)",
+  "Precision Engineering": "Machinery",
+  "CNC": "Machinery",
+  "CNC Machined Parts": "Machinery",
+  "precision components": "Machinery",
+  "machined components": "Machinery",
+  "sheet metal": "Machinery",
+  "fabrication": "Machinery",
+  "precision manufacturing": "Machinery",
+  "auto components": "Machinery",
+  "automotive components": "Machinery",
+  "Tier-2 supplier": "Machinery",
+  "engineering components": "Machinery"
 }

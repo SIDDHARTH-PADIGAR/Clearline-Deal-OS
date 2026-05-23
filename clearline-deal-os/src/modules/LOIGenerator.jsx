@@ -2,7 +2,60 @@ import { useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { callAI } from '../lib/ai';
 
-const LOI_SYSTEM_PROMPT = `You are a UK M&A solicitor drafting a Letter of Intent (also known as Heads of Terms) on behalf of Clearline Capital Ltd, the buyer. This is a non-binding expression of interest in acquiring the target company via a share purchase. Write in standard UK M&A legal style — formal, precise, unambiguous. Use British spelling throughout.
+function buildLOIPrompt(geography) {
+  if (geography === 'India') {
+    return `You are an Indian M&A lawyer drafting a Memorandum of Understanding (MoU) on behalf of the buyer. This is a non-binding expression of intent to acquire the target company. Write in formal Indian legal style. All figures in INR (Indian Rupees). References to the Companies Act 2013, SEBI guidelines, and RBI regulations where applicable.
+
+Generate a complete MoU with the following sections:
+
+1. PARTIES
+Buyer: [Buyer entity name], incorporated in India under the Companies Act 2013.
+Seller/Promoter: [Seller name] as promoter/owner of [Company name] (CIN: [CIN if available]).
+Adviser to Seller: [Broker name].
+
+2. RECITALS
+State the nature of the proposed transaction. State that the parties have agreed to enter into this MoU to record their mutual understanding. State this MoU is non-binding except where explicitly stated.
+
+3. PROPOSED TRANSACTION
+Describe the proposed acquisition — share purchase, asset purchase, or slump sale as applicable. State the basis of consideration (enterprise value, equity value). Reference whether the transaction is subject to SEBI Takeover Code applicability where relevant.
+
+4. PURCHASE CONSIDERATION & STRUCTURE
+State the proposed enterprise value in INR. State cash-free, debt-free basis adjusted for normalised working capital. Reference any earnout or deferred consideration. Note that the final consideration is subject to completion of due diligence and SPA negotiation.
+
+5. CONDITIONS PRECEDENT
+List conditions that must be satisfied before binding transaction documents are executed:
+- Satisfactory completion of financial, legal, tax, and technical due diligence
+- Board and shareholder approvals of both parties
+- Receipt of all applicable regulatory approvals including, where applicable, RBI approval for FDI, Competition Commission of India (CCI) clearance if thresholds are met, and SEBI approvals
+- Confirmation of clean title to shares and/or assets
+- Key management retention agreements being in place
+- Resolution of any pending litigation, tax demands, or regulatory proceedings
+
+6. EXCLUSIVITY
+The Seller agrees not to solicit, entertain, or enter into discussions with any third party regarding a sale of the business or any material part thereof for [X] weeks from the date of this MoU. This clause IS binding.
+
+7. DUE DILIGENCE
+Outline the proposed DD process and timeline. The Buyer requires access to: audited financial statements (3 years), GST returns and GSTIN details, income tax returns and Form 26AS, MCA filings and ROC records, all material contracts, employment records, statutory compliance certificates, and any pending litigation disclosures.
+
+8. CONFIDENTIALITY
+Both parties confirm that all information exchanged under this MoU is confidential and subject to any NDA previously executed. This clause IS binding. Governed by the Information Technology Act 2000 and applicable Indian law.
+
+9. COSTS
+Each party shall bear its own legal, advisory, and due diligence costs unless otherwise agreed in the definitive SPA.
+
+10. GOVERNING LAW & JURISDICTION
+This MoU is governed by the laws of India. Any disputes arising out of this MoU shall be subject to the exclusive jurisdiction of the courts at [HQ City], India.
+
+11. NEXT STEPS
+Propose that the parties execute this MoU within [X] business days and proceed to grant exclusivity and commence due diligence with a target completion date of [date].
+
+Close with execution blocks for both parties including name, designation, company name, place, and date.
+
+Write in full legal prose. No bullet points in the body. Section headers in uppercase. Do not include commentary outside the document itself.`;
+  }
+
+  // Default: UK LOI
+  return `You are a UK M&A solicitor drafting a Letter of Intent (also known as Heads of Terms) on behalf of Clearline Capital Ltd, the buyer. This is a non-binding expression of interest in acquiring the target company via a share purchase. Write in standard UK M&A legal style — formal, precise, unambiguous. Use British spelling throughout.
 
 Generate a complete LOI with the following sections:
 
@@ -44,6 +97,7 @@ Propose that the parties agree to this LOI within [X] business days and proceed 
 Close with signature blocks for both parties.
 
 Write in full legal prose. No bullet points in the body. Section headers in uppercase. Do not include any commentary or notes outside the document itself.`;
+}
 
 function downloadTxt(content, filename) {
   const blob = new Blob([content], { type: 'text/plain' });
@@ -82,22 +136,30 @@ function renderLOI(text) {
   });
 }
 
-export default function LOIGenerator({ currentDeal, session }) {
-  // Pre-fill from currentDeal where available
-  const [companyName,     setCompanyName]     = useState(currentDeal?.brief?.company_name || currentDeal?.name || '');
-  const [sector,          setSector]          = useState(currentDeal?.brief?.sector || '');
-  const [sellerName,      setSellerName]      = useState('');
-  const [broker,          setBroker]          = useState('');
-  const [proposedEV,      setProposedEV]      = useState(currentDeal?.brief?.asking_price || '');
+export default function LOIGenerator({ currentDeal, session, geography }) {
+  // Detect geography from deal currency or prop
+  const dealCurrency = currentDeal?.brief?.detected_currency || currentDeal?.brief?.detectedCurrency;
+  const effectiveGeo = dealCurrency === 'INR' ? 'India' : (geography || 'UK');
+  const isIndia = effectiveGeo === 'India';
+
+  // Pre-fill from currentDeal where available (new nested schema with flat fallback)
+  const [companyName,     setCompanyName]     = useState(currentDeal?.brief?.company?.name || currentDeal?.brief?.company_name || currentDeal?.name || '');
+  const [sector,          setSector]          = useState(currentDeal?.brief?.company?.sector || currentDeal?.brief?.sector || '');
+  const [sellerName,      setSellerName]      = useState(currentDeal?.brief?.company?.seller_name || '');
+  const [broker,          setBroker]          = useState(currentDeal?.brief?.company?.adviser_name || '');
+  const [proposedEV,      setProposedEV]      = useState(currentDeal?.brief?.deal?.asking_price || currentDeal?.brief?.asking_price || '');
   const [offerBasis,      setOfferBasis]      = useState('Cash-free / Debt-free');
-  const [structure,       setStructure]       = useState('Full share purchase');
+  const [structure,       setStructure]       = useState(isIndia ? 'Share purchase under Companies Act 2013' : 'Full share purchase');
   const [earnout,         setEarnout]         = useState('No earnout');
   const [earnoutDetail,   setEarnoutDetail]   = useState('');
   const [exclusivity,     setExclusivity]     = useState('6 weeks');
   const [ddPeriod,        setDdPeriod]        = useState('6 weeks');
   const [targetCompletion,setTargetCompletion]= useState('');
-  const [conditions,      setConditions]      = useState('Satisfactory completion of financial and legal DD, financing approval, key employee retention');
-  const [buyerEntity,     setBuyerEntity]     = useState('Clearline Capital Ltd');
+  const [conditions,      setConditions]      = useState(isIndia
+    ? 'Satisfactory completion of financial, legal and tax DD; RBI/FEMA compliance confirmation; CCI clearance if applicable; key management retention'
+    : 'Satisfactory completion of financial and legal DD, financing approval, key employee retention'
+  );
+  const [buyerEntity,     setBuyerEntity]     = useState(isIndia ? 'Clearline Capital Pvt. Ltd.' : 'Clearline Capital Ltd');
   const [buyerAdviser,    setBuyerAdviser]    = useState('');
 
   const [generatedLOI, setGeneratedLOI] = useState('');
@@ -115,7 +177,7 @@ Target company: ${companyName}
 Sector: ${sector}
 Seller name: ${sellerName || 'Not specified'}
 Broker: ${broker || 'Not specified'}
-Proposed EV: ${proposedEV}
+Proposed EV: ${isIndia ? '₹' : ''}${proposedEV}
 Offer basis: ${offerBasis}
 Structure: ${structure}
 Earnout: ${earnout}${earnoutDetail ? ` — ${earnoutDetail}` : ''}
@@ -125,9 +187,10 @@ Target completion: ${targetCompletion || 'To be agreed'}
 Conditions precedent (buyer-specified): ${conditions}
 Buyer entity: ${buyerEntity}
 Buyer adviser: ${buyerAdviser || 'TBC'}
-Today's date: ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+${isIndia ? `HQ City (for jurisdiction): ${currentDeal?.brief?.company?.hq_city || 'Mumbai'}` : ''}
+Today's date: ${new Date().toLocaleDateString(isIndia ? 'en-IN' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
       `.trim();
-      const res = await callAI(LOI_SYSTEM_PROMPT, userContent);
+      const res = await callAI(buildLOIPrompt(effectiveGeo), userContent);
       setGeneratedLOI(res);
     } catch (err) {
       setError('Generation failed: ' + err.message);

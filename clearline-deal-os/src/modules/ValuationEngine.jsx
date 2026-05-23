@@ -14,8 +14,18 @@ function parseNum(val) {
   return n;
 }
 
+function formatINR(value) {
+  if (value === null || value === undefined) return '—';
+  const crore = value / 10000000;
+  if (crore >= 1) return '₹' + crore.toFixed(2) + ' Cr';
+  const lakh = value / 100000;
+  if (lakh >= 1) return '₹' + lakh.toFixed(2) + ' L';
+  return '₹' + value.toLocaleString('en-IN');
+}
+
 function formatCurrency(val, sym = '£') {
   if (val == null || typeof val !== 'number' || isNaN(val)) return `${sym}—`;
+  if (sym === '₹') return formatINR(val);
   if (Math.abs(val) >= 1_000_000) return `${sym}${(val / 1_000_000).toFixed(2)}M`;
   return `${sym}${Math.round(val).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 }
@@ -199,7 +209,9 @@ export default function ValuationEngine({ currentDeal, setActive, geography }) {
 
   const { brief } = currentDeal;
   // Currency comes from the document itself — geography is fallback only
-  const sym = b(brief).detected_currency ?? geoCurrSym(geo);
+  const docCurr = b(brief).detected_currency;
+  const currMap = { GBP: '£', USD: '$', EUR: '€', INR: '₹', AED: 'AED ' };
+  const sym = currMap[docCurr] ?? docCurr ?? geoCurrSym(geo);
   const sector = b(brief).sector;
   const bm  = getBenchmark(sector);
   const buv = buildUpValuation(brief, bm);
