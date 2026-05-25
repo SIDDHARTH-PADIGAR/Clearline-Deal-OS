@@ -43,7 +43,7 @@ export default function Login({ initialMode = 'signin' }) {
 
         {/* Wordmark */}
         <div style={{ fontFamily: 'var(--serif)', fontSize: '20px', color: 'var(--amber)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '2px' }}>
-          Clearline Capital
+          Deal OS
         </div>
         <div style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--muted)', marginBottom: '24px' }}>
           Deal Operating System

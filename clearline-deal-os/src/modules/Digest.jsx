@@ -47,7 +47,7 @@ export default function Digest({ session }) {
     setBriefingLoading(true);
     setError(null);
     try {
-      const prompt = `You are chief of staff to Oscar Lindhardt, solo founder of Clearline Capital (UK PE firm).
+      const prompt = `You are chief of staff to Oscar Lindhardt, solo founder of Deal OS (UK PE firm).
 Given this data: ${JSON.stringify({ deals, contacts })}
 
 Write a crisp 3-bullet morning briefing. Max 2 lines per bullet.

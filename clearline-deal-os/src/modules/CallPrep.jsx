@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { callAI } from '../lib/ai';
 
-const CALLPREP_SYSTEM_PROMPT = `You are preparing Oscar Lindhardt (Founder, Clearline Capital) for a seller call with a UK SME owner. Critical context about Oscar: he is 25 years old, Danish, self-taught in deal-making with no traditional finance background. He is direct, warm, and authentic. He has publicly admitted he gets nervous on seller calls and sometimes says something different from what he means. He is NOT a banker. He should NOT sound like one.
+const CALLPREP_SYSTEM_PROMPT = `You are preparing Oscar Lindhardt (Founder, Deal OS) for a seller call with a UK SME owner. Critical context about Oscar: he is 25 years old, Danish, self-taught in deal-making with no traditional finance background. He is direct, warm, and authentic. He has publicly admitted he gets nervous on seller calls and sometimes says something different from what he means. He is NOT a banker. He should NOT sound like one.
 
 Write everything in plain, conversational language that Oscar would actually say out loud. No corporate phrases. No "I'm excited to explore synergies." No "mutually agreeable solutions." Write how a smart, hungry, genuine person talks.
 

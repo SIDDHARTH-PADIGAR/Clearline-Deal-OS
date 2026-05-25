@@ -437,58 +437,98 @@ export default function Landing() {
               </a>
             </MagneticButton>
           </motion.div>
+
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.8, duration: 1 }} style={{ marginTop: '24px', fontFamily: '"DM Sans", sans-serif', fontSize: '13px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+            Documents processed in-memory. Never stored. Never used for training. No Google Analytics.
+          </motion.div>
         </div>
         
         {/* Bottom fade */}
         <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '200px', background: 'linear-gradient(to bottom, transparent, #050508)', zIndex: 5 }} />
       </section>
 
-      {/* SECTION 2 - STICKY NARRATIVE */}
-      <section style={{ backgroundColor: '#050508', position: 'relative' }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', position: 'relative' }}>
+      {/* SECTION 2 - WORKFLOW PACE (BEFORE / AFTER) */}
+      <section style={{ backgroundColor: '#0a0a0f', padding: '160px 0', position: 'relative', overflow: 'hidden' }}>
+        {/* Subtle glowing grid background */}
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)', backgroundSize: '50px 50px', opacity: 0.5 }} />
+        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(201,168,76,0.05) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        
+        <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 40px', position: 'relative', zIndex: 10 }}>
+          <h2 style={{ fontFamily: '"DM Serif Display", serif', fontSize: '48px', textAlign: 'center', marginBottom: '80px' }}>
+            Asymmetrical leverage.
+          </h2>
           
-          {/* Left Pinned Side */}
-          <div style={{ width: '50%', padding: '160px 80px', position: 'sticky', top: 0, height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true, margin: '-20%' }} transition={{ duration: 1 }}>
-              <h2 style={{ fontFamily: '"DM Serif Display", serif', fontSize: '64px', lineHeight: 1.1, marginBottom: '24px' }}>
-                The solo deal workflow <br/><span style={{ color: '#c9a84c', fontStyle: 'italic' }}>is broken.</span>
-              </h2>
-              <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '18px', color: '#a0a0ab', lineHeight: 1.6, maxWidth: '400px' }}>
-                Acquisition entrepreneurs spend their most valuable resource — time — doing data entry instead of building relationships.
-              </p>
-            </motion.div>
-          </div>
-
-          {/* Right Scrolling Side */}
-          <div style={{ width: '50%', padding: '160px 80px 160px 0', display: 'flex', flexDirection: 'column', gap: '30vh' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '80px', background: '#050508', border: '1px solid rgba(255,255,255,0.05)', padding: '60px', borderRadius: '16px', boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }}>
             
-            <motion.div initial={{ opacity: 0, x: 50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, margin: '-20%' }} transition={{ duration: 0.8 }} style={{ position: 'relative' }}>
-              <div style={{ position: 'absolute', left: '-40px', top: 0, bottom: 0, width: '1px', background: 'linear-gradient(to bottom, #c9a84c, transparent)' }} />
-              <div style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: '120px', lineHeight: 0.8, color: 'transparent', WebkitTextStroke: '1px rgba(255,255,255,0.1)', marginBottom: '24px' }}>01</div>
-              <h3 style={{ fontFamily: '"DM Serif Display", serif', fontSize: '32px', marginBottom: '16px' }}>4 Hours Per IM</h3>
-              <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '16px', color: '#a0a0ab', lineHeight: 1.6 }}>
-                Reading 40-page PDFs, hunting for add-backs, and manually structuring balance sheet data into Excel. Deal OS extracts 35 structured financial fields instantly.
-              </p>
-            </motion.div>
+            {/* MANUAL TRACK */}
+            <div style={{ position: 'relative' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontFamily: '"IBM Plex Mono", monospace', fontSize: '12px', color: '#64748b', letterSpacing: '1px' }}>
+                <span>THE OLD WAY</span>
+                <span>4-6 HOURS</span>
+              </div>
+              <div style={{ position: 'relative', height: '16px', background: '#0a0a0f', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
+                <motion.div initial={{ width: 0 }} whileInView={{ width: '25%' }} viewport={{ once: true }} transition={{ duration: 2.5, ease: 'easeOut' }} style={{ height: '100%', background: 'linear-gradient(90deg, #1e293b, #334155)', borderRadius: '8px' }} />
+                
+                {/* Checkpoints */}
+                <div style={{ position: 'absolute', inset: 0, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', alignItems: 'center', justifyItems: 'center' }}>
+                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)' }} />
+                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)' }} />
+                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)' }} />
+                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)' }} />
+                </div>
+              </div>
+              
+              {/* DEAL LOST BADGE */}
+              <motion.div 
+                initial={{ opacity: 0, y: 10, scale: 0.9 }} 
+                whileInView={{ opacity: 1, y: 0, scale: 1 }} 
+                viewport={{ once: true }} 
+                transition={{ duration: 0.5, delay: 2.5, type: 'spring' }} 
+                style={{ position: 'absolute', left: '27%', top: '30px', background: '#ef4444', color: '#fff', padding: '4px 10px', borderRadius: '4px', fontFamily: '"IBM Plex Mono", monospace', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px', boxShadow: '0 4px 12px rgba(239,68,68,0.4)', zIndex: 20 }}
+              >
+                DEAL LOST TO COMPETITOR
+              </motion.div>
 
-            <motion.div initial={{ opacity: 0, x: 50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, margin: '-20%' }} transition={{ duration: 0.8 }} style={{ position: 'relative' }}>
-              <div style={{ position: 'absolute', left: '-40px', top: 0, bottom: 0, width: '1px', background: 'linear-gradient(to bottom, #c9a84c, transparent)' }} />
-              <div style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: '120px', lineHeight: 0.8, color: 'transparent', WebkitTextStroke: '1px rgba(255,255,255,0.1)', marginBottom: '24px' }}>02</div>
-              <h3 style={{ fontFamily: '"DM Serif Display", serif', fontSize: '32px', marginBottom: '16px' }}>Blind Valuation</h3>
-              <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '16px', color: '#a0a0ab', lineHeight: 1.6 }}>
-                Guessing multiples. Deal OS runs a 4-method BAUS valuation engine benchmarked against live Damodaran sector data with built-in private market illiquidity discounts.
-              </p>
-            </motion.div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', marginTop: '16px', fontFamily: '"DM Sans", sans-serif', fontSize: '13px', color: '#475569', textAlign: 'center' }}>
+                <span>Read 40-page IM</span>
+                <motion.span initial={{ opacity: 1 }} whileInView={{ opacity: 0.3 }} viewport={{ once: true }} transition={{ delay: 2.5, duration: 0.5 }}>Hunt for add-backs</motion.span>
+                <motion.span initial={{ opacity: 1 }} whileInView={{ opacity: 0.3 }} viewport={{ once: true }} transition={{ delay: 2.5, duration: 0.5 }}>Build Excel model</motion.span>
+                <motion.span initial={{ opacity: 1 }} whileInView={{ opacity: 0.3 }} viewport={{ once: true }} transition={{ delay: 2.5, duration: 0.5 }}>Google directors</motion.span>
+              </div>
+            </div>
 
-            <motion.div initial={{ opacity: 0, x: 50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, margin: '-20%' }} transition={{ duration: 0.8 }} style={{ position: 'relative' }}>
-              <div style={{ position: 'absolute', left: '-40px', top: 0, bottom: 0, width: '1px', background: 'linear-gradient(to bottom, #c9a84c, transparent)' }} />
-              <div style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: '120px', lineHeight: 0.8, color: 'transparent', WebkitTextStroke: '1px rgba(255,255,255,0.1)', marginBottom: '24px' }}>03</div>
-              <h3 style={{ fontFamily: '"DM Serif Display", serif', fontSize: '32px', marginBottom: '16px' }}>Compliance Ambush</h3>
-              <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '16px', color: '#a0a0ab', lineHeight: 1.6 }}>
-                Missing a related-party loan or an HMRC dispute buried in Note 14. Deal OS automatically screens 9 ECRM risk categories universally, plus local registry rules.
-              </p>
-            </motion.div>
+            {/* DEAL OS TRACK */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontFamily: '"IBM Plex Mono", monospace', fontSize: '12px', color: '#c9a84c', letterSpacing: '1px', fontWeight: 'bold' }}>
+                <span>DEAL OS</span>
+                <span>2 MINUTES</span>
+              </div>
+              <div style={{ position: 'relative', height: '16px', background: '#0a0a0f', borderRadius: '8px', border: '1px solid rgba(201,168,76,0.3)', overflow: 'hidden' }}>
+                <motion.div initial={{ width: 0 }} whileInView={{ width: ['0%', '25%', '25%', '50%', '50%', '75%', '75%', '100%'] }} viewport={{ once: true }} transition={{ duration: 1.5, times: [0, 0.15, 0.25, 0.4, 0.5, 0.65, 0.75, 1], ease: 'easeInOut' }} style={{ height: '100%', background: 'linear-gradient(90deg, #b39132, #d4b45d)', borderRadius: '8px', boxShadow: '0 0 20px rgba(201,168,76,0.5)' }} />
+                
+                {/* Checkpoints */}
+                <div style={{ position: 'absolute', inset: 0, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', alignItems: 'center', justifyItems: 'center' }}>
+                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'rgba(0,0,0,0.3)' }} />
+                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'rgba(0,0,0,0.3)' }} />
+                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'rgba(0,0,0,0.3)' }} />
+                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'rgba(0,0,0,0.3)' }} />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', marginTop: '16px', fontFamily: '"DM Sans", sans-serif', fontSize: '13px', color: '#c9a84c', textAlign: 'center' }}>
+                <span>Upload PDF</span>
+                <span>Instant Extraction</span>
+                <span>BAUS Valuation</span>
+                <span>Deal Package Ready</span>
+              </div>
+            </div>
 
+          </div>
+          
+          <div style={{ marginTop: '60px', textAlign: 'center' }}>
+             <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '17px', color: '#a0a0ab', lineHeight: 1.6, maxWidth: '700px', margin: '0 auto' }}>
+              Whether you are a <span style={{ color: '#fff', fontWeight: 500 }}>Search Fund Principal</span>, an <span style={{ color: '#fff', fontWeight: 500 }}>Independent Sponsor</span>, or a <span style={{ color: '#fff', fontWeight: 500 }}>Boutique M&A Adviser</span> — time is your bottleneck. Deal OS removes it, allowing you to underwrite 5x more deals and outpace competing buyers.
+            </p>
           </div>
         </div>
       </section>
@@ -630,87 +670,52 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* SECTION 5 - WORKFLOW PACE (BEFORE / AFTER) */}
-      <section style={{ backgroundColor: '#0a0a0f', padding: '160px 0', position: 'relative', overflow: 'hidden' }}>
-        {/* Subtle glowing grid background */}
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)', backgroundSize: '50px 50px', opacity: 0.5 }} />
-        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(201,168,76,0.05) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        
-        <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 40px', position: 'relative', zIndex: 10 }}>
-          <h2 style={{ fontFamily: '"DM Serif Display", serif', fontSize: '48px', textAlign: 'center', marginBottom: '80px' }}>
-            Asymmetrical leverage.
-          </h2>
+      {/* SECTION 5 - STICKY NARRATIVE */}
+      <section style={{ backgroundColor: '#050508', position: 'relative' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', position: 'relative' }}>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '80px', background: '#050508', border: '1px solid rgba(255,255,255,0.05)', padding: '60px', borderRadius: '16px', boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }}>
-            
-            {/* MANUAL TRACK */}
-            <div style={{ position: 'relative' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontFamily: '"IBM Plex Mono", monospace', fontSize: '12px', color: '#64748b', letterSpacing: '1px' }}>
-                <span>THE OLD WAY</span>
-                <span>4-6 HOURS</span>
-              </div>
-              <div style={{ position: 'relative', height: '16px', background: '#0a0a0f', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
-                <motion.div initial={{ width: 0 }} whileInView={{ width: '25%' }} viewport={{ once: true }} transition={{ duration: 2.5, ease: 'easeOut' }} style={{ height: '100%', background: 'linear-gradient(90deg, #1e293b, #334155)', borderRadius: '8px' }} />
-                
-                {/* Checkpoints */}
-                <div style={{ position: 'absolute', inset: 0, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', alignItems: 'center', justifyItems: 'center' }}>
-                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)' }} />
-                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)' }} />
-                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)' }} />
-                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)' }} />
-                </div>
-              </div>
-              
-              {/* DEAL LOST BADGE */}
-              <motion.div 
-                initial={{ opacity: 0, y: 10, scale: 0.9 }} 
-                whileInView={{ opacity: 1, y: 0, scale: 1 }} 
-                viewport={{ once: true }} 
-                transition={{ duration: 0.5, delay: 2.5, type: 'spring' }} 
-                style={{ position: 'absolute', left: '27%', top: '30px', background: '#ef4444', color: '#fff', padding: '4px 10px', borderRadius: '4px', fontFamily: '"IBM Plex Mono", monospace', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px', boxShadow: '0 4px 12px rgba(239,68,68,0.4)', zIndex: 20 }}
-              >
-                DEAL LOST TO COMPETITOR
-              </motion.div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', marginTop: '16px', fontFamily: '"DM Sans", sans-serif', fontSize: '13px', color: '#475569', textAlign: 'center' }}>
-                <span>Read 40-page IM</span>
-                <motion.span initial={{ opacity: 1 }} whileInView={{ opacity: 0.3 }} viewport={{ once: true }} transition={{ delay: 2.5, duration: 0.5 }}>Hunt for add-backs</motion.span>
-                <motion.span initial={{ opacity: 1 }} whileInView={{ opacity: 0.3 }} viewport={{ once: true }} transition={{ delay: 2.5, duration: 0.5 }}>Build Excel model</motion.span>
-                <motion.span initial={{ opacity: 1 }} whileInView={{ opacity: 0.3 }} viewport={{ once: true }} transition={{ delay: 2.5, duration: 0.5 }}>Google directors</motion.span>
-              </div>
-            </div>
-
-            {/* DEAL OS TRACK */}
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontFamily: '"IBM Plex Mono", monospace', fontSize: '12px', color: '#c9a84c', letterSpacing: '1px', fontWeight: 'bold' }}>
-                <span>DEAL OS</span>
-                <span>2 MINUTES</span>
-              </div>
-              <div style={{ position: 'relative', height: '16px', background: '#0a0a0f', borderRadius: '8px', border: '1px solid rgba(201,168,76,0.3)', overflow: 'hidden' }}>
-                <motion.div initial={{ width: 0 }} whileInView={{ width: ['0%', '25%', '25%', '50%', '50%', '75%', '75%', '100%'] }} viewport={{ once: true }} transition={{ duration: 1.5, times: [0, 0.15, 0.25, 0.4, 0.5, 0.65, 0.75, 1], ease: 'easeInOut' }} style={{ height: '100%', background: 'linear-gradient(90deg, #b39132, #d4b45d)', borderRadius: '8px', boxShadow: '0 0 20px rgba(201,168,76,0.5)' }} />
-                
-                {/* Checkpoints */}
-                <div style={{ position: 'absolute', inset: 0, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', alignItems: 'center', justifyItems: 'center' }}>
-                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'rgba(0,0,0,0.3)' }} />
-                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'rgba(0,0,0,0.3)' }} />
-                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'rgba(0,0,0,0.3)' }} />
-                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'rgba(0,0,0,0.3)' }} />
-                </div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', marginTop: '16px', fontFamily: '"DM Sans", sans-serif', fontSize: '13px', color: '#c9a84c', textAlign: 'center' }}>
-                <span>Upload PDF</span>
-                <span>Instant Extraction</span>
-                <span>BAUS Valuation</span>
-                <span>Deal Package Ready</span>
-              </div>
-            </div>
-
+          {/* Left Pinned Side */}
+          <div style={{ width: '50%', padding: '160px 80px', position: 'sticky', top: 0, height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true, margin: '-20%' }} transition={{ duration: 1 }}>
+              <h2 style={{ fontFamily: '"DM Serif Display", serif', fontSize: '64px', lineHeight: 1.1, marginBottom: '24px' }}>
+                The solo deal workflow <br/><span style={{ color: '#c9a84c', fontStyle: 'italic' }}>is broken.</span>
+              </h2>
+              <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '18px', color: '#a0a0ab', lineHeight: 1.6, maxWidth: '400px' }}>
+                Acquisition entrepreneurs spend their most valuable resource — time — doing data entry instead of building relationships.
+              </p>
+            </motion.div>
           </div>
-          
-          <div style={{ marginTop: '60px', textAlign: 'center' }}>
-             <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '17px', color: '#a0a0ab', lineHeight: 1.6, maxWidth: '700px', margin: '0 auto' }}>
-              Whether you are a <span style={{ color: '#fff', fontWeight: 500 }}>Search Fund Principal</span>, an <span style={{ color: '#fff', fontWeight: 500 }}>Independent Sponsor</span>, or a <span style={{ color: '#fff', fontWeight: 500 }}>Boutique M&A Adviser</span> — time is your bottleneck. Deal OS removes it, allowing you to underwrite 5x more deals and outpace competing buyers.
-            </p>
+
+          {/* Right Scrolling Side */}
+          <div style={{ width: '50%', padding: '160px 80px 160px 0', display: 'flex', flexDirection: 'column', gap: '30vh' }}>
+            
+            <motion.div initial={{ opacity: 0, x: 50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, margin: '-20%' }} transition={{ duration: 0.8 }} style={{ position: 'relative' }}>
+              <div style={{ position: 'absolute', left: '-40px', top: 0, bottom: 0, width: '1px', background: 'linear-gradient(to bottom, #c9a84c, transparent)' }} />
+              <div style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: '120px', lineHeight: 0.8, color: 'transparent', WebkitTextStroke: '1px rgba(255,255,255,0.1)', marginBottom: '24px' }}>01</div>
+              <h3 style={{ fontFamily: '"DM Serif Display", serif', fontSize: '32px', marginBottom: '16px' }}>4 Hours Per IM</h3>
+              <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '16px', color: '#a0a0ab', lineHeight: 1.6 }}>
+                Reading 40-page PDFs, hunting for add-backs, and manually structuring balance sheet data into Excel. Deal OS extracts 35 structured financial fields instantly.
+              </p>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, x: 50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, margin: '-20%' }} transition={{ duration: 0.8 }} style={{ position: 'relative' }}>
+              <div style={{ position: 'absolute', left: '-40px', top: 0, bottom: 0, width: '1px', background: 'linear-gradient(to bottom, #c9a84c, transparent)' }} />
+              <div style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: '120px', lineHeight: 0.8, color: 'transparent', WebkitTextStroke: '1px rgba(255,255,255,0.1)', marginBottom: '24px' }}>02</div>
+              <h3 style={{ fontFamily: '"DM Serif Display", serif', fontSize: '32px', marginBottom: '16px' }}>Blind Valuation</h3>
+              <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '16px', color: '#a0a0ab', lineHeight: 1.6 }}>
+                Guessing multiples. Deal OS runs a 4-method BAUS valuation engine benchmarked against live Damodaran sector data with built-in private market illiquidity discounts.
+              </p>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, x: 50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, margin: '-20%' }} transition={{ duration: 0.8 }} style={{ position: 'relative' }}>
+              <div style={{ position: 'absolute', left: '-40px', top: 0, bottom: 0, width: '1px', background: 'linear-gradient(to bottom, #c9a84c, transparent)' }} />
+              <div style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: '120px', lineHeight: 0.8, color: 'transparent', WebkitTextStroke: '1px rgba(255,255,255,0.1)', marginBottom: '24px' }}>03</div>
+              <h3 style={{ fontFamily: '"DM Serif Display", serif', fontSize: '32px', marginBottom: '16px' }}>Compliance Ambush</h3>
+              <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '16px', color: '#a0a0ab', lineHeight: 1.6 }}>
+                Missing a related-party loan or an HMRC dispute buried in Note 14. Deal OS automatically screens 9 ECRM risk categories universally, plus local registry rules.
+              </p>
+            </motion.div>
+
           </div>
         </div>
       </section>
@@ -778,6 +783,14 @@ export default function Landing() {
               </motion.div>
             ))}
           </div>
+
+          <div style={{ textAlign: 'center', marginTop: '48px', fontFamily: '"DM Sans", sans-serif', fontSize: '13px', color: '#64748b' }}>
+            UK pricing shown ex-VAT. VAT added at checkout. Indian pricing inclusive of GST.
+          </div>
+          <div style={{ textAlign: 'center', marginTop: '16px', fontFamily: '"DM Sans", sans-serif', fontSize: '14px', color: '#a0a0ab', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+            No credit card required for trial. Cancel anytime. Documents never stored.
+          </div>
         </div>
       </section>
 
@@ -803,10 +816,14 @@ export default function Landing() {
               Upload your first IM free. No setup. No credit card.
             </p>
             <MagneticButton>
-              <Link to="/signup" style={{ display: 'inline-block', background: 'linear-gradient(135deg, #d4b45d 0%, #b39132 100%)', color: '#0a0a0f', padding: '20px 48px', borderRadius: '4px', fontWeight: 600, fontSize: '18px', fontFamily: '"DM Sans", sans-serif', textDecoration: 'none', marginBottom: '32px', boxShadow: '0 10px 40px rgba(201, 168, 76, 0.4)' }}>
+              <Link to="/signup" style={{ display: 'inline-block', background: 'linear-gradient(135deg, #d4b45d 0%, #b39132 100%)', color: '#0a0a0f', padding: '20px 48px', borderRadius: '4px', fontWeight: 600, fontSize: '18px', fontFamily: '"DM Sans", sans-serif', textDecoration: 'none', marginBottom: '24px', boxShadow: '0 10px 40px rgba(201, 168, 76, 0.4)' }}>
                 Start Free Trial
               </Link>
             </MagneticButton>
+            <div style={{ marginBottom: '32px', fontFamily: '"DM Sans", sans-serif', fontSize: '13px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+              Documents processed in-memory. Never stored. Never used for training. No Google Analytics.
+            </div>
             <div>
               <Link to="/login" style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '15px', color: '#64748b', textDecoration: 'none', transition: 'color 0.2s' }} onMouseOver={e => e.target.style.color = '#fff'} onMouseOut={e => e.target.style.color = '#64748b'}>
                 Already have an account? <span style={{ color: '#fff', textDecoration: 'underline' }}>Sign in</span>
@@ -857,7 +874,7 @@ export default function Landing() {
         </div>
         <div style={{ maxWidth: '1400px', margin: '80px auto 0', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: '11px', color: 'rgba(255,255,255,0.2)' }}>
-            © 2026 CLEARLINE CAPITAL. ALL RIGHTS RESERVED.
+            © 2026 DEAL OS. ALL RIGHTS RESERVED.
           </div>
           <div style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: '11px', color: 'rgba(255,255,255,0.2)' }}>
             SYSTEM STATUS: <span style={{ color: '#10b981' }}>OPERATIONAL</span>

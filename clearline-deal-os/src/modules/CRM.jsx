@@ -61,7 +61,7 @@ export default function CRM({ session }) {
     setDraftModal(true);
     setDraftLoading(true);
     setDraft('');
-    const prompt = `Draft a brief, professional follow-up email from Oscar Lindhardt (Founder, Clearline Capital)
+    const prompt = `Draft a brief, professional follow-up email from Oscar Lindhardt (Founder, Deal OS)
 to ${c.name} at ${c.company}. Context: ${c.next_action}. Tone: direct, warm, non-salesy. Max 120 words. No intro or explanation, just the email body.`;
     const res = await callAI('You are an assistant.', prompt);
     setDraft(res);

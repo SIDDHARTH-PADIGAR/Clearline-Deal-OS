@@ -3,7 +3,7 @@ import { supabase } from '../supabaseClient';
 import { callAI } from '../lib/ai';
 import Tooltip from '../components/shared/Tooltip';
 
-const DEAL_DECISION_PROMPT = `You are a senior deal analyst at a UK private equity firm. You are preparing a Deal Decision Brief for Oscar Lindhardt, Founder of Clearline Capital — a solo PE operator building a UK B2B Services roll-up platform. Oscar has no traditional finance background. He acquires 1-2 businesses per year, targets £500K–£3M EBITDA, and needs this brief to be direct, specific, and actionable.
+const DEAL_DECISION_PROMPT = `You are a senior deal analyst at a UK private equity firm. You are preparing a Deal Decision Brief for Oscar Lindhardt, Founder of Deal OS — a solo PE operator building a UK B2B Services roll-up platform. Oscar has no traditional finance background. He acquires 1-2 businesses per year, targets £500K–£3M EBITDA, and needs this brief to be direct, specific, and actionable.
 
 You will receive structured deal data extracted from an Information Memorandum. Generate a full Deal Decision Brief with exactly these eight sections. Be specific to THIS deal — never generic. Use company names, contract names, actual numbers from the data. Write like a trusted advisor who has seen hundreds of deals, not like a report generator.
 

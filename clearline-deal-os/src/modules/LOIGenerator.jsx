@@ -55,12 +55,12 @@ Write in full legal prose. No bullet points in the body. Section headers in uppe
   }
 
   // Default: UK LOI
-  return `You are a UK M&A solicitor drafting a Letter of Intent (also known as Heads of Terms) on behalf of Clearline Capital Ltd, the buyer. This is a non-binding expression of interest in acquiring the target company via a share purchase. Write in standard UK M&A legal style — formal, precise, unambiguous. Use British spelling throughout.
+  return `You are a UK M&A solicitor drafting a Letter of Intent (also known as Heads of Terms) on behalf of Deal OS Ltd, the buyer. This is a non-binding expression of interest in acquiring the target company via a share purchase. Write in standard UK M&A legal style — formal, precise, unambiguous. Use British spelling throughout.
 
 Generate a complete LOI with the following sections:
 
 1. PARTIES
-Buyer: Clearline Capital Ltd, registered in England and Wales.
+Buyer: Deal OS Ltd, registered in England and Wales.
 Seller: [seller name] as owner of [company name].
 Adviser to seller: [broker name].
 
@@ -74,7 +74,7 @@ Include working capital peg reference. Reference earnout if applicable.
 
 4. CONDITIONS PRECEDENT
 List the conditions that must be satisfied before exchange of contracts.
-Always include: satisfactory completion of financial, legal and commercial due diligence; board approval of Clearline Capital; financing being in place on acceptable terms. Add any buyer-specified conditions.
+Always include: satisfactory completion of financial, legal and commercial due diligence; board approval of Deal OS; financing being in place on acceptable terms. Add any buyer-specified conditions.
 
 5. EXCLUSIVITY
 State that the seller agrees not to solicit, entertain or enter into discussions with any third party regarding a sale of the business for [X] weeks from the date of this letter. State that this clause IS binding.
@@ -159,7 +159,7 @@ export default function LOIGenerator({ currentDeal, session, geography }) {
     ? 'Satisfactory completion of financial, legal and tax DD; RBI/FEMA compliance confirmation; CCI clearance if applicable; key management retention'
     : 'Satisfactory completion of financial and legal DD, financing approval, key employee retention'
   );
-  const [buyerEntity,     setBuyerEntity]     = useState(isIndia ? 'Clearline Capital Pvt. Ltd.' : 'Clearline Capital Ltd');
+  const [buyerEntity,     setBuyerEntity]     = useState(isIndia ? 'Deal OS Pvt. Ltd.' : 'Deal OS Ltd');
   const [buyerAdviser,    setBuyerAdviser]    = useState('');
 
   const [generatedLOI, setGeneratedLOI] = useState('');

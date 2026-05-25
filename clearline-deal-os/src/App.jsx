@@ -4,6 +4,7 @@ import { supabase } from './supabaseClient';
 import LoginPage from './modules/Login';
 import MainApp from './MainApp';
 import Landing from './pages/Landing';
+import Privacy from './pages/Privacy';
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="/login" element={session ? <Navigate to="/app" /> : <LoginPage />} />
         <Route path="/signup" element={session ? <Navigate to="/app" /> : <LoginPage initialMode="signup" />} />
         <Route path="/app" element={session ? <MainApp session={session} /> : <Navigate to="/login" />} />
+        <Route path="/privacy" element={<Privacy />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
