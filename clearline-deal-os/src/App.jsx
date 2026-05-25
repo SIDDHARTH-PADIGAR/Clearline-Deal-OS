@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
 import LoginPage from './modules/Login';
-import MainApp from './MainApp'; // Sidebar + Topbar + module router
+import MainApp from './MainApp';
+import Landing from './pages/Landing';
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -19,6 +21,16 @@ export default function App() {
   }, []);
 
   if (loading) return <div className="loading-screen">Loading...</div>;
-  if (!session) return <LoginPage />;
-  return <MainApp session={session} />;
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={session ? <Navigate to="/app" /> : <Landing />} />
+        <Route path="/login" element={session ? <Navigate to="/app" /> : <LoginPage />} />
+        <Route path="/signup" element={session ? <Navigate to="/app" /> : <LoginPage initialMode="signup" />} />
+        <Route path="/app" element={session ? <MainApp session={session} /> : <Navigate to="/login" />} />
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
