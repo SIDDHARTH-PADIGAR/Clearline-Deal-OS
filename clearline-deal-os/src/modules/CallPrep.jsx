@@ -22,7 +22,19 @@ Write 3 specific red flags for THIS deal. For each one: what to watch for, what 
 CLOSING
 Write exactly what Oscar says to close the call. Must include: a genuine compliment about what David built, a clear statement of intent, and a specific ask with a timeframe. Should feel like a person ending a good conversation, not a banker wrapping up a meeting.`;
 
-export default function CallPrep({ currentDeal }) {
+export default function CallPrep({ currentDeal, setActive }) {
+  if (!currentDeal) {
+    return (
+      <div className="empty-state" style={{ paddingTop: '120px' }}>
+        <div className="empty-icon">☎</div>
+        <div style={{ fontFamily: '"DM Serif Display", serif', fontSize: '24px', color: 'var(--amber)', marginBottom: '8px' }}>Seller Call Prep</div>
+        <div className="empty-text" style={{ fontFamily: '"DM Sans", sans-serif', marginBottom: '20px' }}>
+          Generate a conversational brief and questions before speaking to the seller.
+        </div>
+        <button className="btn btn-primary" onClick={() => setActive('im')}>Upload an IM to get started →</button>
+      </div>
+    );
+  }
   const [dealName, setDealName] = useState(currentDeal?.name || '');
   const [sector, setSector] = useState(currentDeal?.brief?.sector || '');
   const [background, setBackground] = useState('');

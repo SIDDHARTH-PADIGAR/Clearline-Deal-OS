@@ -1,6 +1,7 @@
 import sectorMapping from '../data/sector_mapping.json';
 import benchmarks from '../data/damodaran_benchmarks_2025.json';
 import geoConfig from '../data/geography_config.json';
+import { ResponsiveContainer, ComposedChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ReferenceLine, Scatter } from 'recharts';
 
 function parseNum(val) {
   if (val == null || val === 'N/A') return null;
@@ -251,210 +252,449 @@ export default function ValuationEngine({ currentDeal, setActive, geography }) {
     else { verdict = 'FAIR VALUE'; verdictColor = 'var(--green)'; verdictLabel = 'FAIR VALUE — asking price within independent valuation range'; }
   }
 
-  const card = (children, extra = {}) => (
-    <div className="card" style={{ marginBottom: '16px', ...extra }}>{children}</div>
-  );
-
   const sectionLabel = (t) => (
-    <div className="section-label" style={{ marginBottom: '12px' }}>{t}</div>
+    <div className="section-label" style={{ marginBottom: '10px', fontSize: '10px', letterSpacing: '0.08em' }}>{t}</div>
   );
 
-  const row = (label, value, highlight = false) => (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '6px 0', borderBottom: '1px solid var(--border)' }}>
-      <span style={{ fontFamily: 'DM Mono, monospace', fontSize: '11px', color: 'var(--muted)' }}>{label}</span>
-      <span style={{ fontFamily: 'DM Mono, monospace', fontSize: highlight ? '15px' : '12px', color: highlight ? 'var(--amber)' : 'var(--text)' }}>{value}</span>
-    </div>
-  );
+  const chartData = [];
+  if (buv?.value) {
+    chartData.push({
+      name: 'Build-up',
+      min: buv.value * 0.9,
+      max: buv.value * 1.1,
+      mid: buv.value,
+      range: [buv.value * 0.9, buv.value * 1.1]
+    });
+  }
+  if (uev?.value) {
+    chartData.push({
+      name: 'Underlying',
+      min: uev.value * 0.9,
+      max: uev.value * 1.1,
+      mid: uev.value,
+      range: [uev.value * 0.9, uev.value * 1.1]
+    });
+  }
+  if (af?.floor) {
+    chartData.push({
+      name: 'Asset Floor',
+      min: 0,
+      max: af.floor,
+      mid: af.floor,
+      range: [0, af.floor]
+    });
+  }
+  const worstSens = scenarios.length ? Math.min(...scenarios.map(s => s.impliedValue)) : null;
+  if (worstSens) {
+    chartData.push({
+      name: 'Sensitivity',
+      min: 0,
+      max: worstSens,
+      mid: worstSens,
+      range: [0, worstSens]
+    });
+  }
+
+  const CustomTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div style={{ background: 'var(--navy2)', border: '1px solid var(--border)', padding: '10px 14px', borderRadius: '4px', fontFamily: 'var(--mono)', fontSize: '11px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
+          <div style={{ color: 'var(--amber)', fontWeight: '500', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{data.name} Range</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
+              <span style={{ color: 'var(--muted)' }}>Low/Min:</span>
+              <span style={{ color: 'var(--green)', fontWeight: '500' }}>{formatCurrency(data.min, sym)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
+              <span style={{ color: 'var(--muted)' }}>Mid/Target:</span>
+              <span style={{ color: 'var(--text)', fontWeight: '500' }}>{formatCurrency(data.mid, sym)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
+              <span style={{ color: 'var(--muted)' }}>High/Max:</span>
+              <span style={{ color: 'var(--amber)', fontWeight: '500' }}>{formatCurrency(data.max, sym)}</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const hasRange = compositeLow && compositeHigh && (compositeHigh !== compositeLow);
+  const rangePct = hasRange && askingPrice != null
+    ? Math.max(0, Math.min(100, ((askingPrice - compositeLow) / (compositeHigh - compositeLow)) * 100))
+    : 50;
 
   return (
-    <div style={{ maxWidth: '820px', margin: '0 auto' }}>
-
-      {/* Summary Banner */}
-      {card(
-        <>
-          {sectionLabel('INDEPENDENT VALUATION RANGE')}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '16px' }}>
-            <div className="mono" style={{ fontSize: '22px', color: 'var(--green)' }}>{formatCurrency(compositeLow, sym)}</div>
-            <div style={{ flex: 1, height: '3px', background: 'var(--navy4)', borderRadius: '2px', position: 'relative' }}>
-              <div style={{ position: 'absolute', top: '-4px', left: '50%', transform: 'translateX(-50%)', width: '10px', height: '10px', borderRadius: '50%', background: 'var(--amber)' }} />
-            </div>
-            <div className="mono" style={{ fontSize: '22px', color: 'var(--amber)' }}>{formatCurrency(compositeHigh, sym)}</div>
+    <div style={{ maxWidth: '860px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '32px' }}>
+      
+      {/* VERDICT & RANGE ROW */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '16px' }}>
+        {/* Verdict Box */}
+        <div className="card" style={{ gridColumn: 'span 5', display: 'flex', flexDirection: 'column', justifyContent: 'center', background: `${verdictColor}06`, border: `1px solid ${verdict ? verdictColor : 'var(--border)'}`, position: 'relative', overflow: 'hidden', minHeight: '130px' }}>
+          <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '100px', height: '100px', borderRadius: '50%', background: verdictColor, filter: 'blur(40px)', opacity: 0.12, pointerEvents: 'none' }} />
+          <div style={{ fontFamily: 'var(--mono)', fontSize: '9px', letterSpacing: '0.12em', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '8px' }}>
+            Overall Deal Verdict
           </div>
-          {askingPrice != null && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span className="mono muted" style={{ fontSize: '11px' }}>Asking: {formatCurrency(askingPrice, sym)}</span>
-              {verdict && (
-                <span style={{
-                  padding: '2px 10px', borderRadius: '2px', fontFamily: 'DM Mono, monospace', fontSize: '10px',
-                  letterSpacing: '0.08em', background: `${verdictColor}18`, color: verdictColor, border: `1px solid ${verdictColor}`,
-                }}>{verdict}</span>
+          <div style={{ fontFamily: 'var(--serif)', fontSize: '20px', fontWeight: 'bold', color: verdictColor || 'var(--text)', marginBottom: '8px' }}>
+            {verdict || 'NO ASKING PRICE'}
+          </div>
+          <div style={{ fontSize: '12px', color: 'var(--text)', lineHeight: 1.4 }}>
+            {verdictLabel}
+          </div>
+        </div>
+
+        {/* Range Slider Box */}
+        <div className="card" style={{ gridColumn: 'span 7', display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: '130px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '12px' }}>
+            <span style={{ fontFamily: 'var(--mono)', fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)' }}>Valuation Range vs Asking</span>
+            {askingPrice != null && (
+              <span style={{ fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--amber)', fontWeight: '500' }}>
+                Asking: {formatCurrency(askingPrice, sym)}
+              </span>
+            )}
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', margin: '8px 0' }}>
+            {/* The visual slider bar */}
+            <div style={{ height: '6px', background: 'var(--navy4)', borderRadius: '3px', position: 'relative', width: '100%', display: 'flex', alignItems: 'center' }}>
+              {/* Color range highlight */}
+              <div style={{ position: 'absolute', left: '10%', right: '10%', height: '100%', background: 'linear-gradient(90deg, var(--green), var(--amber))', borderRadius: '3px', opacity: 0.8 }} />
+              
+              {/* Slider Pin for Asking Price */}
+              {askingPrice != null && (
+                <div 
+                  style={{ 
+                    position: 'absolute', 
+                    left: `${10 + (rangePct * 0.8)}%`, 
+                    transform: 'translateX(-50%)', 
+                    width: '12px', 
+                    height: '12px', 
+                    borderRadius: '50%', 
+                    background: verdictColor || 'var(--amber)', 
+                    border: '2px solid var(--text)', 
+                    boxShadow: '0 0 6px rgba(255,255,255,0.4)',
+                    zIndex: 5
+                  }}
+                  title={`Asking Price: ${formatCurrency(askingPrice, sym)}`}
+                />
               )}
             </div>
-          )}
-          {!bm && <div className="mono" style={{ fontSize: '10px', marginTop: '12px', color: 'var(--amber)' }}>Sector '{sector || '(unknown)'}' not mapped — benchmarks unavailable. Add to sector_mapping.json to enable.</div>}
-        </>
-      )}
-
-      {/* Method 1 — Build-Up */}
-      {card(
-        <>
-          {sectionLabel('METHOD 1 — BUILD-UP VALUATION')}
-          <div className="mono muted" style={{ fontSize: '10px', marginBottom: '14px' }}>Starts from sector base multiple, adjusts for deal-specific attributes.</div>
-          {!buv ? (
-            <div className="mono muted" style={{ fontSize: '11px' }}>Insufficient data — EBITDA figure required.</div>
-          ) : (
-            <>
-              {row('Base multiple (sector private median)', `${buv.baseMultiple}x`)}
-              {Object.entries(buv.adjustments).map(([k, v]) =>
-                row(`  ${v >= 0 ? '+' : ''}${(v * 10).toFixed(1) === '-3.5' ? '' : ''} ${k}`, `${v >= 0 ? '+' : ''}${v.toFixed(2)}x`)
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}>
+              <div>
+                <div className="mono muted" style={{ fontSize: '8px', letterSpacing: '0.04em' }}>LOW FLOOR</div>
+                <div className="mono" style={{ fontSize: '12px', color: 'var(--green)' }}>{compositeLow ? formatCurrency(compositeLow, sym) : '—'}</div>
+              </div>
+              {compositeMid && (
+                <div style={{ textAlign: 'center' }}>
+                  <div className="mono muted" style={{ fontSize: '8px', letterSpacing: '0.04em' }}>COMPOSITE MID</div>
+                  <div className="mono" style={{ fontSize: '12px', color: 'var(--text)' }}>{formatCurrency(compositeMid, sym)}</div>
+                </div>
               )}
-              {row('Adjustments applied', `${buv.totalAdj >= 0 ? '+' : ''}${buv.totalAdj}x`)}
-              {row('Implied multiple', `${buv.adjustedMultiple}x`, true)}
-              {row('Implied enterprise value', formatCurrency(buv.value, sym), true)}
-            </>
-          )}
-        </>
-      )}
-
-      {/* Method 2 — Underlying Earnings */}
-      {card(
-        <>
-          {sectionLabel('METHOD 2 — UNDERLYING EARNINGS VALUATION')}
-          <div className="mono muted" style={{ fontSize: '10px', marginBottom: '14px' }}>Applies multiple to normalised, adjusted EBITDA only.</div>
-          {!uev ? (
-            <div className="mono muted" style={{ fontSize: '11px' }}>Insufficient data.</div>
-          ) : (
-            <>
-              {row(uev.isProxy ? 'Reported Profit (Proxy Used)' : 'Reported EBITDA', formatCurrency(uev.reportedEBITDA, sym))}
-              {row(`Conservative haircut (${uev.haircut}% for one-offs, owner costs)`, `−${formatCurrency(uev.reportedEBITDA * uev.haircut / 100, sym).replace(sym, '')}`)}
-              {row(uev.isProxy ? 'Underlying Profit' : 'Underlying EBITDA', formatCurrency(uev.underlyingEBITDA, sym), true)}
-              {row('Applied multiple (from Build-up)', `${uev.multiple}x`)}
-              {row('Implied enterprise value', formatCurrency(uev.value, sym), true)}
-              <div className="mono muted" style={{ fontSize: '9px', marginTop: '10px', fontStyle: 'italic' }}>
-                {uev.isProxy 
-                  ? 'Note: Explicit EBITDA was missing from documents. Using operating profit / PBT proxy.' 
-                  : 'Buyer should request full EBITDA bridge in DD to verify all adjustments. IM-stated EBITDA accepted pending verification.'}
+              <div style={{ textAlign: 'right' }}>
+                <div className="mono muted" style={{ fontSize: '8px', letterSpacing: '0.04em' }}>HIGH CEILING</div>
+                <div className="mono" style={{ fontSize: '12px', color: 'var(--amber)' }}>{compositeHigh ? formatCurrency(compositeHigh, sym) : '—'}</div>
               </div>
-            </>
-          )}
-        </>
-      )}
-
-      {/* Method 3 — Asset Floor */}
-      {card(
-        <>
-          {sectionLabel('METHOD 3 — ASSET-BASED FLOOR VALUATION')}
-          <div className="mono muted" style={{ fontSize: '10px', marginBottom: '14px' }}>Minimum value if business stopped trading. Relevant for capital-heavy deals.</div>
-          {!af ? (
-            <div className="mono muted" style={{ fontSize: '11px' }}>Insufficient data for asset floor calculation.</div>
-          ) : (
-            <>
-              <div className="mono muted" style={{ fontSize: '11px', marginBottom: '10px' }}>This appears to be an asset-light business. Asset floor is a floor, not a target.</div>
-              {af.debtors && row('Estimated debtors (34-day basis)', `Est. ${formatCurrency(af.debtors, sym)}`)}
-              {af.floor && row('Estimated asset floor (after liabilities)', `Est. ${formatCurrency(af.floor, sym)}`, true)}
-              <div style={{ background: 'rgba(232,168,53,0.05)', border: '1px solid var(--border2)', borderRadius: '3px', padding: '10px', marginTop: '10px' }}>
-                <div className="mono muted" style={{ fontSize: '9px', fontStyle: 'italic', lineHeight: 1.6 }}>
-                  Paying above asset value implies you are paying for: customer contracts, workforce, brand, systems, and management team. Ensure these are contractually protected in the SPA.
-                </div>
-              </div>
-            </>
-          )}
-        </>
-      )}
-
-      {/* Method 4 — Sensitivity */}
-      {card(
-        <>
-          {sectionLabel('METHOD 4 — DOWNSIDE SENSITIVITY')}
-          <div className="mono muted" style={{ fontSize: '10px', marginBottom: '14px' }}>Implied value if key risks materialise.</div>
-          {scenarios.length === 0 ? (
-            <div className="mono muted" style={{ fontSize: '11px' }}>Insufficient data for sensitivity analysis.</div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {scenarios.map((s, i) => (
-                <div key={i} style={{ background: 'var(--navy3)', border: '1px solid var(--border)', borderRadius: '3px', padding: '14px' }}>
-                  <div style={{ fontFamily: 'Barlow, sans-serif', fontSize: '13px', marginBottom: '8px' }}>{s.name}</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '8px' }}>
-                    {[
-                      { label: 'EBITDA Impact', val: `${(s.ebitdaImpact * 100).toFixed(0)}%` },
-                      { label: 'Distressed EBITDA', val: formatCurrency(s.distressedEBITDA, sym) },
-                      { label: 'Implied Value', val: formatCurrency(s.impliedValue, sym) },
-                      { label: 'vs Asking', val: s.vsAsking != null ? `${s.vsAsking > 0 ? '+' : ''}${s.vsAsking}%` : '—' },
-                    ].map(m => (
-                      <div key={m.label} style={{ gridColumn: m.label === 'vs Asking' ? '1 / span 4' : 'auto' }}>
-                        <div className="mono muted" style={{ fontSize: '9px', marginBottom: '2px' }}>{m.label}</div>
-                        <div className="mono" style={{ fontSize: '12px', color: m.label === 'vs Asking' && s.impliedValue < askingPrice ? 'var(--red)' : m.label === 'vs Asking' && s.impliedValue > askingPrice ? 'var(--green)' : 'var(--text)' }}>
-                          {m.label === 'vs Asking' && askingPrice != null 
-                            ? `${formatCurrency(Math.abs(s.impliedValue - askingPrice), sym)} vs asking ${formatCurrency(askingPrice, sym)} — ${s.impliedValue > askingPrice ? 'above asking — deal still makes sense under this scenario' : 'below asking — scenario represents overpayment risk'}` 
-                            : m.val}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
             </div>
-          )}
-        </>
-      )}
+          </div>
+        </div>
+      </div>
 
-      {/* Summary Table */}
-      {card(
-        <>
-          {sectionLabel('VALUATION SUMMARY')}
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'DM Mono, monospace', fontSize: '11px' }}>
-            <thead>
-              <tr>
-                {['METHOD', 'LOW', 'MID', 'HIGH'].map(h => (
-                  <td key={h} style={{ color: 'var(--muted)', padding: '6px 8px', borderBottom: '1px solid var(--border)', textAlign: h === 'METHOD' ? 'left' : 'right' }}>{h}</td>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                { label: 'Build-up', low: buv?.value ? buv.value * 0.9 : null, mid: buv?.value || null, high: buv?.value ? buv.value * 1.1 : null },
-                { label: 'Underlying Earnings', low: uev?.value ? uev.value * 0.9 : null, mid: uev?.value || null, high: uev?.value ? uev.value * 1.1 : null },
-                { label: 'Asset Floor', low: af?.floor || null, mid: null, high: null },
-                { label: 'Sensitivity (worst)', low: scenarios.length ? Math.min(...scenarios.map(s => s.impliedValue)) : null, mid: null, high: null },
-              ].map((r, i) => (
-                <tr key={i}>
-                  <td style={{ padding: '7px 8px', borderBottom: '1px solid var(--border)', color: 'var(--muted)' }}>{r.label}</td>
-                  {[r.low, r.mid, r.high].map((v, j) => (
-                    <td key={j} style={{ padding: '7px 8px', borderBottom: '1px solid var(--border)', textAlign: 'right', color: 'var(--text)' }}>
-                      {v != null ? formatCurrency(v, sym) : '—'}
-                    </td>
+      {/* CHART & VALUATION SUMMARY ROW */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '16px' }}>
+        {/* Chart Box (Span 7) */}
+        <div className="card" style={{ gridColumn: 'span 7', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '260px' }}>
+          {sectionLabel('Valuation Methods Comparison')}
+          <div style={{ flex: 1, minHeight: '180px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+            {chartData.length === 0 ? (
+              <div className="mono muted" style={{ fontSize: '11px' }}>No valuation data to chart</div>
+            ) : (
+              <ResponsiveContainer width="100%" height={180}>
+                <ComposedChart
+                  layout="vertical"
+                  data={chartData}
+                  margin={{ top: 10, right: 15, left: -25, bottom: 5 }}
+                >
+                  <defs>
+                    <linearGradient id="barValGradient" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="var(--green)" stopOpacity={0.25} />
+                      <stop offset="100%" stopColor="var(--amber)" stopOpacity={0.25} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis
+                    type="number"
+                    domain={[0, 'auto']}
+                    tickFormatter={(v) => formatCurrency(v, sym)}
+                    stroke="var(--muted)"
+                    style={{ fontSize: '9px', fontFamily: 'var(--mono)' }}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis
+                    dataKey="name"
+                    type="category"
+                    stroke="var(--muted)"
+                    style={{ fontSize: '10px', fontFamily: 'var(--mono)' }}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
+                  {/* Floating Range Bar */}
+                  <Bar dataKey="range" fill="url(#barValGradient)" stroke="var(--green)" strokeWidth={1} radius={2} barSize={8} />
+                  {/* Mid/Target Point */}
+                  <Scatter dataKey="mid" fill="var(--amber)" shape="circle" size={40} />
+                  {askingPrice != null && (
+                    <ReferenceLine
+                      x={askingPrice}
+                      stroke={verdictColor || 'var(--red)'}
+                      strokeDasharray="3 3"
+                      label={{
+                        value: `Asking`,
+                        fill: verdictColor || 'var(--red)',
+                        position: 'top',
+                        style: { fontSize: '8px', fontFamily: 'var(--mono)', letterSpacing: '0.04em' }
+                      }}
+                    />
+                  )}
+                </ComposedChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+
+        {/* Valuation Summary Table Box (Span 5) */}
+        <div className="card" style={{ gridColumn: 'span 5', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '260px' }}>
+          {sectionLabel('Valuation Summary')}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--mono)', fontSize: '10px' }}>
+              <thead>
+                <tr>
+                  {['METHOD', 'LOW', 'HIGH'].map(h => (
+                    <td key={h} style={{ color: 'var(--muted)', padding: '4px 6px', borderBottom: '1px solid var(--border)', textAlign: h === 'METHOD' ? 'left' : 'right', fontWeight: 500 }}>{h}</td>
                   ))}
                 </tr>
-              ))}
-              <tr>
-                <td style={{ padding: '8px 8px', fontWeight: 700, color: 'var(--text)' }}>COMPOSITE RANGE</td>
-                <td style={{ padding: '8px', textAlign: 'right', color: 'var(--green)', fontWeight: 700 }}>{compositeLow ? formatCurrency(compositeLow, sym) : '—'}</td>
-                <td style={{ padding: '8px', textAlign: 'right', color: 'var(--text)' }}>{compositeMid ? formatCurrency(compositeMid, sym) : '—'}</td>
-                <td style={{ padding: '8px', textAlign: 'right', color: 'var(--amber)', fontWeight: 700 }}>{compositeHigh ? formatCurrency(compositeHigh, sym) : '—'}</td>
-              </tr>
-              {askingPrice != null && (
+              </thead>
+              <tbody>
+                {[
+                  { label: 'Build-up', low: buv?.value ? buv.value * 0.9 : null, high: buv?.value ? buv.value * 1.1 : null },
+                  { label: 'Underlying', low: uev?.value ? uev.value * 0.9 : null, high: uev?.value ? uev.value * 1.1 : null },
+                  { label: 'Asset Floor', low: af?.floor || null, high: af?.floor || null },
+                  { label: 'Sensitivity', low: scenarios.length ? Math.min(...scenarios.map(s => s.impliedValue)) : null, high: null },
+                ].map((r, i) => (
+                  <tr key={i}>
+                    <td style={{ padding: '6px', borderBottom: '1px solid var(--border)', color: 'var(--muted)' }}>{r.label}</td>
+                    <td style={{ padding: '6px', borderBottom: '1px solid var(--border)', textAlign: 'right', color: 'var(--text)' }}>
+                      {r.low != null ? formatCurrency(r.low, sym) : '—'}
+                    </td>
+                    <td style={{ padding: '6px', borderBottom: '1px solid var(--border)', textAlign: 'right', color: 'var(--text)' }}>
+                      {r.high != null ? formatCurrency(r.high, sym) : '—'}
+                    </td>
+                  </tr>
+                ))}
                 <tr>
-                  <td style={{ padding: '8px', color: verdictColor, fontWeight: 700 }}>ASKING PRICE</td>
-                  <td colSpan={2} style={{ padding: '8px', textAlign: 'right', color: verdictColor, fontWeight: 700 }}>{formatCurrency(askingPrice, sym)}</td>
-                  <td style={{ padding: '8px', textAlign: 'right' }}>
-                    <span style={{ padding: '2px 8px', borderRadius: '2px', background: `${verdictColor}18`, color: verdictColor, fontSize: '9px', letterSpacing: '0.06em' }}>{verdict}</span>
-                  </td>
+                  <td style={{ padding: '8px 6px 4px', fontWeight: 600, color: 'var(--text)' }}>COMPOSITE</td>
+                  <td style={{ padding: '8px 6px 4px', textAlign: 'right', color: 'var(--green)', fontWeight: 600 }}>{compositeLow ? formatCurrency(compositeLow, sym) : '—'}</td>
+                  <td style={{ padding: '8px 6px 4px', textAlign: 'right', color: 'var(--amber)', fontWeight: 600 }}>{compositeHigh ? formatCurrency(compositeHigh, sym) : '—'}</td>
                 </tr>
-              )}
-            </tbody>
-          </table>
+                {askingPrice != null && (
+                  <tr>
+                    <td style={{ padding: '4px 6px', color: verdictColor, fontWeight: 600 }}>ASKING</td>
+                    <td colSpan={2} style={{ padding: '4px 6px', textAlign: 'right', color: verdictColor, fontWeight: 600 }}>{formatCurrency(askingPrice, sym)}</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
-          {askingPrice == null ? (
-            <div style={{ background: 'var(--navy3)', border: '1px solid var(--border)', padding: '12px', marginTop: '16px', borderRadius: '3px', textAlign: 'center' }}>
-              <span className="mono muted" style={{ fontSize: '10px' }}>Upload IM with asking price stated to enable verdict</span>
+      {/* METHODS DETAILS: BUILD-UP & UNDERLYING (Row 3) */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        {/* Method 1: Build-Up */}
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '260px' }}>
+          <div>
+            {sectionLabel('Method 1 — Build-Up Valuation')}
+            {buv && askingPrice != null && (
+              <div style={{ fontSize: '11px', color: 'var(--text)', marginBottom: '12px', padding: '6px 10px', background: 'var(--navy3)', borderRadius: '3px', borderLeft: `3.5px solid ${buv.value >= askingPrice ? 'var(--green)' : 'var(--red)'}`, lineHeight: 1.4 }}>
+                {buv.value >= askingPrice 
+                  ? 'Values business above asking price — attractive entry.'
+                  : 'Values business below asking price — negotiation suggested.'}
+              </div>
+            )}
+            {!buv ? (
+              <div className="mono muted" style={{ fontSize: '11px' }}>Insufficient data — EBITDA figure required.</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid var(--border)', fontSize: '11px' }}>
+                  <span style={{ color: 'var(--muted)' }}>Base Sector SME Multiple</span>
+                  <span style={{ fontFamily: 'var(--mono)' }}>{buv.baseMultiple}x</span>
+                </div>
+                {Object.entries(buv.adjustments).map(([k, v]) => (
+                  <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid var(--border)', fontSize: '11px' }}>
+                    <span style={{ color: 'var(--text)' }}>{k}</span>
+                    <span style={{ fontFamily: 'var(--mono)', color: v >= 0 ? 'var(--green)' : 'var(--red)', fontWeight: 500 }}>
+                      {v >= 0 ? '+' : ''}{v.toFixed(2)}x
+                    </span>
+                  </div>
+                ))}
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid var(--border)', fontSize: '11px' }}>
+                  <span style={{ color: 'var(--muted)' }}>Total Adjustments</span>
+                  <span style={{ fontFamily: 'var(--mono)', color: buv.totalAdj >= 0 ? 'var(--green)' : 'var(--red)' }}>
+                    {buv.totalAdj >= 0 ? '+' : ''}{buv.totalAdj}x
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {buv && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '12px' }}>
+              <div style={{ background: 'var(--navy3)', padding: '8px', borderRadius: '4px', textAlign: 'center', border: '1px solid var(--border)' }}>
+                <div style={{ fontFamily: 'var(--mono)', fontSize: '8px', color: 'var(--muted)', textTransform: 'uppercase' }}>Implied Multiple</div>
+                <div style={{ fontFamily: 'var(--mono)', fontSize: '14px', color: 'var(--amber)', fontWeight: 600, marginTop: '2px' }}>{buv.adjustedMultiple}x</div>
+              </div>
+              <div style={{ background: 'var(--navy3)', padding: '8px', borderRadius: '4px', textAlign: 'center', border: '1px solid var(--border)' }}>
+                <div style={{ fontFamily: 'var(--mono)', fontSize: '8px', color: 'var(--muted)', textTransform: 'uppercase' }}>Enterprise Value</div>
+                <div style={{ fontFamily: 'var(--mono)', fontSize: '14px', color: 'var(--green)', fontWeight: 600, marginTop: '2px' }}>{formatCurrency(buv.value, sym)}</div>
+              </div>
             </div>
-          ) : (verdict && (
-            <div style={{ background: `${verdictColor}10`, border: `1px solid ${verdictColor}`, padding: '12px', marginTop: '16px', borderRadius: '3px', textAlign: 'center' }}>
-              <span className="mono" style={{ fontSize: '11px', color: verdictColor, fontWeight: 700 }}>{verdictLabel}</span>
+          )}
+        </div>
+
+        {/* Method 2: Underlying Earnings */}
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '260px' }}>
+          <div>
+            {sectionLabel('Method 2 — Underlying Earnings')}
+            {uev && askingPrice != null && (
+              <div style={{ fontSize: '11px', color: 'var(--text)', marginBottom: '12px', padding: '6px 10px', background: 'var(--navy3)', borderRadius: '3px', borderLeft: `3.5px solid ${uev.value >= askingPrice ? 'var(--green)' : 'var(--red)'}`, lineHeight: 1.4 }}>
+                {uev.value >= askingPrice 
+                  ? 'Normalised earnings support value relative to asking price.'
+                  : 'Normalised earnings suggest potential overpayment.'}
+              </div>
+            )}
+            {!uev ? (
+              <div className="mono muted" style={{ fontSize: '11px' }}>Insufficient data.</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid var(--border)', fontSize: '11px' }}>
+                  <span style={{ color: 'var(--muted)' }}>{uev.isProxy ? 'Reported Profit (Proxy)' : 'Reported EBITDA'}</span>
+                  <span style={{ fontFamily: 'var(--mono)' }}>{formatCurrency(uev.reportedEBITDA, sym)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid var(--border)', fontSize: '11px' }}>
+                  <span style={{ color: 'var(--muted)' }}>SME Haircut ({uev.haircut}%)</span>
+                  <span style={{ fontFamily: 'var(--mono)', color: 'var(--red)' }}>−{formatCurrency(uev.reportedEBITDA * uev.haircut / 100, sym)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid var(--border)', fontSize: '11px' }}>
+                  <span style={{ color: 'var(--muted)' }}>{uev.isProxy ? 'Underlying Profit' : 'Underlying EBITDA'}</span>
+                  <span style={{ fontFamily: 'var(--mono)', fontWeight: 500 }}>{formatCurrency(uev.underlyingEBITDA, sym)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid var(--border)', fontSize: '11px' }}>
+                  <span style={{ color: 'var(--muted)' }}>Applied Multiple</span>
+                  <span style={{ fontFamily: 'var(--mono)' }}>{uev.multiple}x</span>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {uev && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px', marginTop: '12px' }}>
+              <div style={{ background: 'var(--navy3)', padding: '8px', borderRadius: '4px', textAlign: 'center', border: '1px solid var(--border)' }}>
+                <div style={{ fontFamily: 'var(--mono)', fontSize: '8px', color: 'var(--muted)', textTransform: 'uppercase' }}>Implied Enterprise Value</div>
+                <div style={{ fontFamily: 'var(--mono)', fontSize: '14px', color: 'var(--green)', fontWeight: 600, marginTop: '2px' }}>{formatCurrency(uev.value, sym)}</div>
+              </div>
             </div>
-          ))}
-        </>
-      )}
+          )}
+        </div>
+      </div>
+
+      {/* ASSET FLOOR & SENSITIVITY (Row 4) */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '16px' }}>
+        {/* Method 3: Asset Floor */}
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '260px' }}>
+          <div>
+            {sectionLabel('Method 3 — Asset Floor')}
+            {!af ? (
+              <div className="mono muted" style={{ fontSize: '11px' }}>Insufficient data.</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ fontSize: '11px', color: 'var(--muted)', fontStyle: 'italic', lineHeight: 1.4 }}>
+                  Asset-light SME default: minimum floor value if trading ceases.
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  {af.debtors && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid var(--border)', fontSize: '11px' }}>
+                      <span style={{ color: 'var(--muted)' }}>Est. Debtors (34-day)</span>
+                      <span style={{ fontFamily: 'var(--mono)' }}>{formatCurrency(af.debtors, sym)}</span>
+                    </div>
+                  )}
+                  {af.floor && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid var(--border)', fontSize: '11px' }}>
+                      <span style={{ color: 'var(--muted)' }}>Asset Floor Value</span>
+                      <span style={{ fontFamily: 'var(--mono)', color: 'var(--green)', fontWeight: 500 }}>{formatCurrency(af.floor, sym)}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <div style={{ background: 'rgba(232,168,53,0.03)', border: '1px solid var(--border2)', borderRadius: '3px', padding: '8px', marginTop: '12px' }}>
+            <div className="mono muted" style={{ fontSize: '8px', fontStyle: 'italic', lineHeight: 1.5 }}>
+              Goodwill value (contracts, workforce, brand) equals asking minus asset floor. SPA should reflect these protections.
+            </div>
+          </div>
+        </div>
+
+        {/* Method 4: Downside Sensitivity */}
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '260px' }}>
+          <div>
+            {sectionLabel('Method 4 — Downside Sensitivity')}
+            {scenarios.length > 0 && askingPrice != null && (
+              <div style={{ fontSize: '11px', color: 'var(--text)', marginBottom: '12px', padding: '6px 10px', background: 'var(--navy3)', borderRadius: '3px', borderLeft: `3.5px solid ${scenarios.every(s => s.impliedValue >= askingPrice) ? 'var(--green)' : 'var(--red)'}`, lineHeight: 1.4 }}>
+                {scenarios.every(s => s.impliedValue >= askingPrice)
+                  ? 'All downside scenarios remain above asking price.'
+                  : 'At least one downside scenario poses overpayment risk.'}
+              </div>
+            )}
+            {scenarios.length === 0 ? (
+              <div className="mono muted" style={{ fontSize: '11px' }}>Insufficient data.</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {scenarios.map((s, i) => {
+                  const isRisk = s.impliedValue < askingPrice;
+                  return (
+                    <div key={i} style={{ background: 'var(--navy3)', border: `1px solid ${isRisk ? 'rgba(239,68,68,0.2)' : 'var(--border)'}`, borderRadius: '4px', padding: '8px 12px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                        <span style={{ fontWeight: 500, fontSize: '11px' }}>{s.name}</span>
+                        {askingPrice != null && (
+                          <span style={{ fontSize: '9px', fontWeight: 600, color: isRisk ? 'var(--red)' : 'var(--green)', background: isRisk ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)', padding: '1px 5px', borderRadius: '2px', fontFamily: 'var(--mono)' }}>
+                            {isRisk ? 'Risk' : 'Covered'}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', gap: '16px', fontSize: '10px', fontFamily: 'var(--mono)', color: 'var(--muted)' }}>
+                        <div>
+                          EBITDA Impact: <span style={{ color: 'var(--red)' }}>{(s.ebitdaImpact * 100).toFixed(0)}%</span>
+                        </div>
+                        <div>
+                          Value: <span style={{ color: 'var(--text)' }}>{formatCurrency(s.impliedValue, sym)}</span>
+                        </div>
+                        {askingPrice != null && (
+                          <div>
+                            vs Asking: <span style={{ color: isRisk ? 'var(--red)' : 'var(--green)' }}>{s.vsAsking > 0 ? '+' : ''}{s.vsAsking}%</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

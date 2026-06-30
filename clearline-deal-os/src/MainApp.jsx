@@ -12,6 +12,7 @@ import CRM from './modules/CRM';
 import ReturnsCalculator from './modules/ReturnsCalculator';
 import LOIGenerator from './modules/LOIGenerator';
 import ValuationEngine from './modules/ValuationEngine';
+import CompareDeals from './modules/CompareDeals';
 
 // ─── Onboarding Modal ────────────────────────────────────────────────────────
 const SLIDES = [
@@ -132,7 +133,6 @@ export default function MainApp({ session }) {
   const [pendingGeo, setPendingGeo] = useState(null);
 
   useEffect(() => {
-    setCurrentDeal(null);
     const key = `onboarding_${session.user.id}`;
     if (!localStorage.getItem(key)) setShowOnboarding(true);
 
@@ -142,6 +142,15 @@ export default function MainApp({ session }) {
       .eq('user_id', session.user.id)
       .single()
       .then(({ data }) => { if (data?.geography) setGeography(data.geography); });
+
+    // Restore the most recently analysed deal so modules aren't locked on refresh
+    supabase.from('deals')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+      .then(({ data }) => { if (data) setCurrentDeal(data); });
   }, [session.user.id]);
 
   const handleDismissOnboarding = () => {
@@ -168,6 +177,7 @@ export default function MainApp({ session }) {
   const modules = {
     digest:    <Digest    {...moduleProps} />,
     pipeline:  <Pipeline  {...moduleProps} />,
+    compare:   <CompareDeals {...moduleProps} />,
     im:        <IMAnalyzer {...moduleProps} />,
     scorer:    <DealScorer {...moduleProps} />,
     memo:      <Memo      {...moduleProps} />,
@@ -195,6 +205,7 @@ export default function MainApp({ session }) {
         session={session}
         geography={geography}
         onGeoChange={handleGeoChange}
+        currentDeal={currentDeal}
       />
       <div className="main">
         <Topbar active={active} geography={geography} />

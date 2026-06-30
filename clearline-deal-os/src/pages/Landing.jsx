@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion, useInView, useMotionValue, useSpring, useTransform, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import * as THREE from 'three';
+import skyscraperImg from '../assets/skyscraper.png';
 
 // ─── UTILS & MICRO-COMPONENTS ───────────────────────────────────────────────
 
@@ -367,85 +368,382 @@ function Navbar() {
   );
 }
 
+// ─── SKYSCRAPER IMAGE MATRIX BACKGROUND ─────────────────────────────────────────
+// Grayscale rasterization of the skyscraper photo using binary characters.
+function DomainMatrixBackground() {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    let raf;
+    let W = canvas.width  = window.innerWidth;
+    let H = canvas.height = window.innerHeight;
+    let mx = -1, my = -1;
+
+    const onMM  = (e) => { mx = e.clientX; my = e.clientY; };
+    const onML  = ()  => { mx = -1; my = -1; };
+    const onRes = ()  => { 
+      W = canvas.width = window.innerWidth; 
+      H = canvas.height = window.innerHeight; 
+      // Re-sample the image when the size changes
+      const cols = Math.floor(W / CW);
+      const rows = Math.floor(H / CH);
+      if (img.complete && img.width > 0) {
+        imageLuminance = sampleImage(img, cols, rows);
+      }
+    };
+    window.addEventListener('mousemove',  onMM);
+    window.addEventListener('mouseleave', onML);
+    window.addEventListener('resize',     onRes);
+
+    // Finance/IB character set (using only 0 and 1 as requested)
+    const CHARS = ['0', '1'];
+    const CW = 15, CH = 22; // Grid cell size
+
+    let imageLuminance = new Float32Array(0);
+
+    // Cover scale helper to maintain image perspective
+    const drawImageCover = (offCtx, image, w, h) => {
+      const imgRatio = image.width / image.height;
+      const canvasRatio = w / h;
+      let sx, sy, sWidth, sHeight;
+      
+      if (imgRatio > canvasRatio) {
+        sHeight = image.height;
+        sWidth = image.height * canvasRatio;
+        sx = (image.width - sWidth) / 2;
+        sy = 0;
+      } else {
+        sWidth = image.width;
+        sHeight = image.width / canvasRatio;
+        sx = 0;
+        sy = (image.height - sHeight) / 2;
+      }
+      offCtx.drawImage(image, sx, sy, sWidth, sHeight, 0, 0, w, h);
+    };
+
+    // Grayscale luminance sampler
+    const sampleImage = (image, cols, rows) => {
+      if (cols <= 0 || rows <= 0) return new Float32Array(0);
+      const offCanvas = document.createElement('canvas');
+      offCanvas.width = cols;
+      offCanvas.height = rows;
+      const offCtx = offCanvas.getContext('2d');
+      if (!offCtx) return new Float32Array(0);
+
+      drawImageCover(offCtx, image, cols, rows);
+
+      const imgData = offCtx.getImageData(0, 0, cols, rows).data;
+      const lums = new Float32Array(cols * rows);
+      for (let i = 0; i < cols * rows; i++) {
+        const r = imgData[i * 4];
+        const g = imgData[i * 4 + 1];
+        const b = imgData[i * 4 + 2];
+        // Grayscale luminance formula
+        lums[i] = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      }
+      return lums;
+    };
+
+    // Load original photograph
+    const img = new Image();
+    img.src = skyscraperImg;
+    img.onload = () => {
+      const cols = Math.floor(W / CW);
+      const rows = Math.floor(H / CH);
+      imageLuminance = sampleImage(img, cols, rows);
+      if (isVisible && !isDrawing) {
+        isDrawing = true;
+        draw();
+      }
+    };
+
+    let t = 0;
+    let isVisible = true;
+    let isDrawing = false;
+
+    // IntersectionObserver to pause loop when hero is scrolled out of view
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        const wasVisible = isVisible;
+        isVisible = entry.isIntersecting;
+        if (isVisible && !wasVisible && !isDrawing && img.complete) {
+          isDrawing = true;
+          draw();
+        }
+      });
+    }, { threshold: 0.01 });
+    observer.observe(canvas);
+
+    const draw = () => {
+      if (!isVisible) {
+        isDrawing = false;
+        return;
+      }
+      isDrawing = true;
+      t += 0.015; // standard smooth time step
+
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, W, H);
+
+      const cols = Math.floor(W / CW);
+      const rows = Math.floor(H / CH);
+      
+      if (imageLuminance.length === 0 || imageLuminance.length !== cols * rows) {
+        if (img.complete && img.width > 0) {
+          imageLuminance = sampleImage(img, cols, rows);
+        }
+        if (imageLuminance.length === 0) {
+          raf = requestAnimationFrame(draw);
+          return;
+        }
+      }
+
+      // Vertical scan sweep across the screen
+      const scanPX = ((Math.sin(t * 0.22) * 0.5 + 0.5)) * W;
+
+      ctx.font = 'bold 9px "IBM Plex Mono",monospace';
+
+      for (let row = 0; row < rows; row++) {
+        const py = row * CH + CH * 0.82;
+        const ny = py / H;
+        
+        for (let col = 0; col < cols; col++) {
+          const px = col * CW;
+          const nx = px / W;
+
+          const lumIndex = row * cols + col;
+          const baseLuminance = imageLuminance[lumIndex];
+
+          let brightness = 0;
+
+          if (baseLuminance > 0.05) {
+            // Skyscraper pixel: base luminance with a data shimmer wave
+            const shimmer = Math.sin(nx * 18 + ny * 24 + t * 1.5) * 0.5 + 0.5;
+            brightness = baseLuminance * (0.68 + shimmer * 0.32);
+          } else {
+            // Sky pixel: very faint ambient noise to keep the sky feeling alive
+            const n = Math.sin(nx * 41.3 + t * 0.7) * Math.cos(ny * 29.1 - t * 0.5);
+            if (n > 0.78) {
+              brightness = 0.02 + (n - 0.78) * 0.10;
+            }
+          }
+
+          // Scan-light sweep glow (sweeps over both sky and buildings)
+          const sd = Math.abs(px - scanPX);
+          brightness += Math.max(0, 1 - sd / (W * 0.05)) * (baseLuminance > 0.05 ? 0.30 : 0.06);
+
+          // Mouse proximity glow (lights up both sky and buildings under the cursor)
+          if (mx >= 0) {
+            const d = Math.sqrt((px - mx) ** 2 + (py - my) ** 2);
+            if (d < 160) {
+              brightness += (1 - d / 160) * (baseLuminance > 0.05 ? 0.38 : 0.18);
+            }
+          }
+
+          brightness = Math.min(brightness, 1.0);
+          if (brightness < 0.015) continue; // Skip completely dark cells for performance
+
+          // Gold colour ramp: near-black → deep amber → #c9a84c → bright gold
+          let r, g, b;
+          if (brightness < 0.22) {
+            const s = brightness / 0.22;
+            r = Math.round(12 + 58 * s);
+            g = Math.round(6 + 34 * s);
+            b = Math.round(0 + 4 * s);
+          } else if (brightness < 0.55) {
+            const s = (brightness - 0.22) / 0.33;
+            r = Math.round(70 + 131 * s);
+            g = Math.round(40 + 128 * s);
+            b = Math.round(4 + 72 * s);
+          } else if (brightness < 0.85) {
+            const s = (brightness - 0.55) / 0.30;
+            r = Math.round(201 + 44 * s);
+            g = Math.round(168 + 52 * s);
+            b = Math.round(76 + 74 * s);
+          } else {
+            const s = (brightness - 0.85) / 0.15;
+            r = Math.round(245 + 10 * s);
+            g = Math.round(220 + 35 * s);
+            b = Math.round(150 + 105 * s);
+          }
+
+          // Pseudo-random binary character alternation
+          const ci = (Math.sin(col * 3.1 + row * 7.3 + t * 4) > 0) ? 1 : 0;
+
+          ctx.fillStyle = `rgb(${r},${g},${b})`;
+          ctx.fillText(CHARS[ci], px, py);
+        }
+      }
+
+      raf = requestAnimationFrame(draw);
+    };
+
+    return () => {
+      cancelAnimationFrame(raf);
+      observer.disconnect();
+      window.removeEventListener('mousemove',  onMM);
+      window.removeEventListener('mouseleave', onML);
+      window.removeEventListener('resize',     onRes);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1, pointerEvents: 'none' }}
+    />
+  );
+}
+
 export default function Landing() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // ── Inject native CSS smooth scroll and scroll snapping (buttery smooth section sliding)
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.id = 'deal-os-smooth-scroll';
+    style.textContent = `
+      html { 
+        scroll-behavior: smooth; 
+        scroll-snap-type: y proximity; 
+      }
+      section {
+        scroll-snap-align: start;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => { const el = document.getElementById('deal-os-smooth-scroll'); if (el) el.remove(); };
+  }, []);
+
   return (
     <div style={{ backgroundColor: '#0a0a0f', color: '#fff', minHeight: '100vh', overflowX: 'hidden' }}>
       <Navbar />
 
-      {/* SECTION 1 - HERO */}
-      <section style={{ position: 'relative', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 50% -20%, rgba(201, 168, 76, 0.15), transparent 60%)', zIndex: 0 }} />
-        <NetworkGraph />
-        <FloatingCards />
-        
-        <div style={{ position: 'relative', zIndex: 10, maxWidth: '900px', padding: '0 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, delay: 0.1, ease: 'easeOut' }}>
-            <div style={{ 
-              fontFamily: '"IBM Plex Mono", monospace', fontSize: '11px', color: '#c9a84c', letterSpacing: '0.3em', textTransform: 'uppercase', marginBottom: '32px',
-              border: '1px solid rgba(201,168,76,0.3)', padding: '6px 16px', borderRadius: '100px', background: 'rgba(201,168,76,0.05)', backdropFilter: 'blur(10px)'
-            }}>
-              Private Market Intelligence
-            </div>
-          </motion.div>
-          
-          <h1 style={{ fontFamily: '"DM Serif Display", serif', fontSize: '80px', lineHeight: 1.05, marginBottom: '32px', letterSpacing: '-1px' }}>
-            <RevealText text="From Information Memorandum" delay={0.2} />
-            <br />
-            <RevealText text="to investment decision." delay={0.4} />
-            <br />
-            <motion.span initial={{ opacity: 0, filter: 'blur(10px)' }} animate={{ opacity: 1, filter: 'blur(0px)' }} transition={{ delay: 1.2, duration: 1 }} style={{ color: '#c9a84c', fontStyle: 'italic' }}>
-              In 2 minutes.
-            </motion.span>
-          </h1>
-          
-          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 1.4 }} style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '18px', color: '#a0a0ab', maxWidth: '600px', margin: '0 auto 48px', lineHeight: 1.6 }}>
-            Deal OS analyses private company IMs end to end — structuring financials, benchmarking valuations, and flagging regulatory risks. Move on deals before the competition even opens the PDF.
-          </motion.p>
-          
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 1.6 }} style={{ display: 'flex', gap: '20px', justifyContent: 'center', alignItems: 'center' }}>
-            <MagneticButton>
-              <Link to="/signup" style={{ 
-                display: 'inline-block',
-                background: 'linear-gradient(135deg, #d4b45d 0%, #b39132 100%)', 
-                color: '#0a0a0f', 
-                padding: '16px 36px', 
-                borderRadius: '4px', 
-                fontWeight: 600, 
-                fontSize: '15px', 
-                fontFamily: '"DM Sans", sans-serif', 
-                textDecoration: 'none',
-                boxShadow: '0 10px 30px -10px rgba(201, 168, 76, 0.6)'
-              }}>
-                Start Free Trial
-              </Link>
-            </MagneticButton>
-            <MagneticButton>
-              <a href="#workflow" style={{ 
-                display: 'inline-block',
-                background: 'rgba(255,255,255,0.03)', 
-                border: '1px solid rgba(255,255,255,0.1)', 
-                color: '#fff', 
-                padding: '16px 36px', 
-                borderRadius: '4px', 
-                fontWeight: 600, 
-                fontSize: '15px', 
-                fontFamily: '"DM Sans", sans-serif', 
-                textDecoration: 'none',
-                backdropFilter: 'blur(10px)'
-              }}>
-                Explore Platform
-              </a>
-            </MagneticButton>
-          </motion.div>
+      {/* SECTION 1 - HERO ─ exact layout matching reference */}
+      <section style={{ position: 'relative', height: '100vh', overflow: 'hidden', backgroundColor: '#000000' }}>
 
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.8, duration: 1 }} style={{ marginTop: '24px', fontFamily: '"DM Sans", sans-serif', fontSize: '13px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-            Documents processed in-memory. Never stored. Never used for training. No Google Analytics.
+        {/* Full-screen silhouette matrix canvas */}
+        <DomainMatrixBackground />
+
+        {/* Subtle bottom-left darkening so text pops */}
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 2, pointerEvents: 'none',
+          background: 'linear-gradient(120deg, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.18) 55%, transparent 100%)'
+        }} />
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 2, pointerEvents: 'none',
+          background: 'linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.30) 30%, transparent 60%)'
+        }} />
+
+        {/* ── BOTTOM-LEFT TEXT (exact reference style) */}
+        <div style={{
+          position: 'absolute',
+          bottom: isMobile ? '48px' : '80px',
+          left:   isMobile ? '20px' : '56px',
+          zIndex: 10,
+          maxWidth: isMobile ? 'calc(100vw - 40px)' : '560px',
+        }}>
+
+          {/* Headline — large, bold, ALL CAPS, tight tracking like reference */}
+          <motion.h1
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.75, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+            style={{ margin: '0 0 14px 0', padding: 0, lineHeight: 1.0 }}
+          >
+            <span style={{
+              display: 'block',
+              fontFamily: '"DM Sans", sans-serif',
+              fontWeight: 700,
+              fontSize: isMobile ? 'clamp(28px, 8vw, 44px)' : 'clamp(36px, 4vw, 56px)',
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+              color: '#ffffff',
+              lineHeight: 1.12,
+            }}>You have a spreadsheet</span>
+            <span style={{
+              display: 'block',
+              fontFamily: '"DM Sans", sans-serif',
+              fontWeight: 700,
+              fontSize: isMobile ? 'clamp(28px, 8vw, 44px)' : 'clamp(36px, 4vw, 56px)',
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+              color: '#ffffff',
+              lineHeight: 1.12,
+            }}>for your deals.</span>
+            <span style={{
+              display: 'block',
+              fontFamily: '"DM Sans", sans-serif',
+              fontWeight: 700,
+              fontSize: isMobile ? 'clamp(28px, 8vw, 44px)' : 'clamp(36px, 4vw, 56px)',
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+              color: '#c9a84c',
+              lineHeight: 1.12,
+            }}>You don’t have an analyst.</span>
+          </motion.h1>
+
+          {/* Body copy — small, muted, like reference */}
+          <motion.p
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            style={{
+              fontFamily: '"DM Sans", sans-serif',
+              fontSize: isMobile ? '14px' : '15px',
+              lineHeight: 1.65,
+              color: 'rgba(255,255,255,0.60)',
+              margin: '0 0 26px 0',
+              maxWidth: '440px',
+            }}
+          >
+            You have a real-time spreadsheet for your deals.{' '}
+            <span style={{ color: '#c9a84c' }}>You don’t have one for your analysis.</span>{' '}
+            Deal OS is it —{' '}
+            <span style={{ color: '#c9a84c' }}>structured financials, independent valuation, draft LOI</span>{' '}
+            from every IM, every deal, every time.
+          </motion.p>
+
+          {/* CTA — single primary button like reference */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.45 }}
+          >
+            <Link
+              to="/signup"
+              style={{
+                display: 'inline-block',
+                background: '#c9a84c',
+                color: '#000000',
+                padding: '13px 28px',
+                fontWeight: 700,
+                fontSize: '14px',
+                fontFamily: '"DM Sans", sans-serif',
+                textDecoration: 'none',
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                borderRadius: '2px',
+              }}
+            >
+              Start Free Trial
+            </Link>
           </motion.div>
         </div>
-        
+
         {/* Bottom fade */}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '200px', background: 'linear-gradient(to bottom, transparent, #050508)', zIndex: 5 }} />
+        <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100px', background: 'linear-gradient(to bottom, transparent, #0a0a0f)', zIndex: 5, pointerEvents: 'none' }} />
       </section>
 
       {/* SECTION 2 - WORKFLOW PACE (BEFORE / AFTER) */}

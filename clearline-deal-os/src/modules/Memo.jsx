@@ -214,7 +214,7 @@ export default function Memo({ currentDeal, session, setActive }) {
       setGeneratedBrief(res);
       setSections(parseSections(res));
     } catch (err) {
-      setError('Generation failed: ' + err.message);
+      setError('Something went wrong — reload the page and try again.');
     } finally {
       setLoading(false);
     }
@@ -245,7 +245,7 @@ export default function Memo({ currentDeal, session, setActive }) {
       }
       alert('Brief saved to deal.');
     } catch (err) {
-      setError('Save failed: ' + err.message);
+      setError("Couldn't save — please try again.");
     } finally {
       setSaving(false);
     }
@@ -268,10 +268,11 @@ export default function Memo({ currentDeal, session, setActive }) {
     return (
       <div className="empty-state" style={{ paddingTop: '120px' }}>
         <div className="empty-icon">▤</div>
-        <div className="empty-text" style={{ fontFamily: 'Libre Baskerville, serif', fontStyle: 'italic', marginBottom: '20px' }}>
-          Analyse an IM first to unlock this module.
+        <div style={{ fontFamily: '"DM Serif Display", serif', fontSize: '24px', color: 'var(--amber)', marginBottom: '8px' }}>Decision Brief</div>
+        <div className="empty-text" style={{ fontFamily: '"DM Sans", sans-serif', marginBottom: '20px' }}>
+          Generate an investor-ready investment memo based on the deal data.
         </div>
-        <button className="btn btn-primary" onClick={() => setActive('im')}>Go to IM Analyzer →</button>
+        <button className="btn btn-primary" onClick={() => setActive('im')}>Upload an IM to get started →</button>
       </div>
     );
   }

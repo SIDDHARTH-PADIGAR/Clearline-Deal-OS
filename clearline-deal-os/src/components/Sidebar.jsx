@@ -3,18 +3,19 @@ import geoConfig from '../data/geography_config.json';
 
 const GEO_OPTIONS = Object.keys(geoConfig);
 
-export default function Sidebar({ active, setActive, onSignOut, session, geography, onGeoChange }) {
+export default function Sidebar({ active, setActive, onSignOut, session, geography, onGeoChange, currentDeal }) {
   const navItems = [
-    { id: 'digest',    icon: '◈', label: 'Daily Digest',          section: null },
-    { id: 'pipeline',  icon: '⊞', label: 'Deal Pipeline',         section: null },
-    { id: 'im',        icon: '⟁', label: 'IM Analyzer',           section: 'ANALYSIS' },
-    { id: 'scorer',    icon: '◎', label: 'Deal Scorer',           section: null },
-    { id: 'memo',      icon: '▤', label: 'Deal Decision Brief',   section: null },
-    { id: 'valuation', icon: '◈', label: 'Valuation Engine',      section: null },
-    { id: 'returns',   icon: '⟳', label: 'Returns Calculator',    section: null },
-    { id: 'loi',       icon: '📄', label: 'LOI Generator',         section: null },
-    { id: 'prep',      icon: '◷', label: 'Seller Call Prep',      section: 'OPS' },
-    { id: 'crm',       icon: '◉', label: 'Relationships',         section: null },
+    { id: 'digest',    icon: '◈', label: 'Daily Digest',       section: null },
+    { id: 'pipeline',  icon: '⊞', label: 'Deal Pipeline',      section: null },
+    { id: 'compare',   icon: '⇄', label: 'Compare Deals',      section: null },
+    { id: 'im',        icon: '⟁', label: 'Analyse a Deal',     section: 'ANALYSIS' },
+    { id: 'scorer',    icon: '◎', label: 'Deal Score',         section: null },
+    { id: 'valuation', icon: '◈', label: 'Valuation',          section: null },
+    { id: 'memo',      icon: '▤', label: 'Decision Brief',     section: null },
+    { id: 'returns',   icon: '⟳', label: 'Returns Calculator', section: null },
+    { id: 'loi',       icon: '📄', label: 'Draft LOI',          section: null },
+    { id: 'prep',      icon: '◷', label: 'Call Prep',          section: 'OPS' },
+    { id: 'crm',       icon: '◉', label: 'Contacts',           section: null },
   ];
 
   const currentGeo = geoConfig[geography] || geoConfig['UK'];
@@ -34,7 +35,7 @@ export default function Sidebar({ active, setActive, onSignOut, session, geograp
               onClick={() => setActive(item.id)}
             >
               <span className="icon">{item.icon}</span>
-              {item.label}
+              <span style={{ flex: 1 }}>{item.label}</span>
             </div>
           </div>
         ))}

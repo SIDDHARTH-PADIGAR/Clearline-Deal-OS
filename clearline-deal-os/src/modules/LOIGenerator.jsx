@@ -136,7 +136,20 @@ function renderLOI(text) {
   });
 }
 
-export default function LOIGenerator({ currentDeal, session, geography }) {
+export default function LOIGenerator({ currentDeal, session, geography, setActive }) {
+  if (!currentDeal) {
+    return (
+      <div className="empty-state" style={{ paddingTop: '120px' }}>
+        <div className="empty-icon">✉</div>
+        <div style={{ fontFamily: '"DM Serif Display", serif', fontSize: '24px', color: 'var(--amber)', marginBottom: '8px' }}>LOI Generator</div>
+        <div className="empty-text" style={{ fontFamily: '"DM Sans", sans-serif', marginBottom: '20px' }}>
+          Draft a non-binding offer letter based on extracted deal terms.
+        </div>
+        <button className="btn btn-primary" onClick={() => setActive('im')}>Upload an IM to get started →</button>
+      </div>
+    );
+  }
+
   // Detect geography from deal currency or prop
   const dealCurrency = currentDeal?.brief?.detected_currency || currentDeal?.brief?.detectedCurrency;
   const effectiveGeo = dealCurrency === 'INR' ? 'India' : (geography || 'UK');
@@ -193,7 +206,7 @@ Today's date: ${new Date().toLocaleDateString(isIndia ? 'en-IN' : 'en-GB', { day
       const res = await callAI(buildLOIPrompt(effectiveGeo), userContent);
       setGeneratedLOI(res);
     } catch (err) {
-      setError('Generation failed: ' + err.message);
+      setError('Something went wrong — reload the page and try again.');
     } finally {
       setLoading(false);
     }
@@ -223,7 +236,7 @@ Today's date: ${new Date().toLocaleDateString(isIndia ? 'en-IN' : 'en-GB', { day
       }
       alert('LOI saved to deal.');
     } catch (err) {
-      setError('Save failed: ' + err.message);
+      setError("Couldn't save — please try again.");
     } finally {
       setSaving(false);
     }

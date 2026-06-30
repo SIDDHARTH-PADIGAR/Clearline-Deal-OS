@@ -530,17 +530,17 @@ function ExtractionResults({ data, setActive }) {
           {sectionLabel('FINANCIAL SUMMARY')}
           {row('Reporting Year', fmtNum(fin.reporting_year))}
           {row('Revenue', fmtMoney(fin.revenue, cur))}
-          {row('Revenue (Prior Year)', fmtMoney(fin.revenue_prior_year, cur))}
+          {row('Last Year Revenue', fmtMoney(fin.revenue_prior_year, cur))}
           {row('Revenue Growth', fmtPct(fin.revenue_growth_pct))}
           {row('Gross Profit', fmtMoney(fin.gross_profit, cur))}
           {row('Gross Margin', fmtPct(fin.gross_margin_pct))}
           {row('EBITDA (Reported)', fmtMoney(fin.ebitda_reported, cur))}
-          {row('EBITDA (Adjusted)', fmtMoney(fin.ebitda_adjusted, cur))}
+          {row('Adjusted EBITDA', fmtMoney(fin.ebitda_adjusted, cur))}
           {row('EBITDA Margin', fmtPct(fin.ebitda_margin_pct))}
           {row('EBIT', fmtMoney(fin.ebit, cur))}
-          {row('PBT', fmtMoney(fin.profit_before_tax, cur))}
+          {row('Pre-Tax Profit', fmtMoney(fin.profit_before_tax, cur))}
           {row('PAT', fmtMoney(fin.profit_after_tax, cur))}
-          {row('Op. Cash Flow', fmtMoney(fin.operating_cash_flow, cur))}
+          {row('Cash from Operations', fmtMoney(fin.operating_cash_flow, cur))}
           {row('Free Cash Flow', fmtMoney(fin.free_cash_flow, cur))}
           {row('CapEx', fmtMoney(fin.capex, cur))}
           {row('Net Debt', fmtMoney(fin.net_debt, cur))}
@@ -569,7 +569,7 @@ function ExtractionResults({ data, setActive }) {
             </div>
             <div>
               {row('Recurring Revenue', nullVal(deal.recurring_revenue_pct, fmtPct))}
-              {row('Top Client Concentration', nullVal(deal.top_client_concentration_pct, fmtPct))}
+              {row('Largest Client %', nullVal(deal.top_client_concentration_pct, fmtPct))}
               {row('Client Count', nullVal(deal.client_count, fmtNum))}
             </div>
           </div>
@@ -711,10 +711,21 @@ function ExtractionResults({ data, setActive }) {
       )}
 
       {/* ── Navigation ── */}
-      <div className="flex gap-12" style={{ marginTop: '20px' }}>
-        <button className="btn btn-primary" onClick={() => setActive('scorer')}>Send to Scorer →</button>
-        <button className="btn btn-outline" onClick={() => setActive('valuation')}>Valuation Engine →</button>
-        <button className="btn btn-outline" onClick={() => setActive('memo')}>Decision Brief →</button>
+      <div style={{ marginTop: '32px', display: 'flex', gap: '12px' }}>
+        <button
+          className="btn btn-primary"
+          style={{ flex: 1, justifyContent: 'center', padding: '14px' }}
+          onClick={() => setActive('scorer')}
+        >
+          Score this Deal →
+        </button>
+        <button
+          className="btn btn-outline"
+          style={{ flex: 1, justifyContent: 'center', padding: '14px' }}
+          onClick={() => setActive('valuation')}
+        >
+          Run Valuation →
+        </button>
       </div>
     </div>
   );
@@ -735,14 +746,19 @@ export default function IMAnalyzer({ setActive, currentDeal, setCurrentDeal, ses
     setError(null);
 
     try {
-      setStatus('Extracting text from PDF...');
+      setStatus('Reading document...');
       const text = await extractPDFText(file);
 
-      setStatus('Running AI extraction + ECRM screening...');
+      setStatus('Extracting financials...');
       const prompt = buildExtractionPrompt(geography, geo);
+      // Wait a moment for UX
+      await new Promise(r => setTimeout(r, 800));
       const aiRes = await callAI(prompt, text);
 
-      // Parse
+      setStatus('Running ECRM screen...');
+      // Wait a moment for UX
+      await new Promise(r => setTimeout(r, 800));
+
       const cleanJson = aiRes.replace(/```json/gi, '').replace(/```/g, '').trim();
       let raw;
       try {
@@ -752,25 +768,19 @@ export default function IMAnalyzer({ setActive, currentDeal, setCurrentDeal, ses
       }
 
       raw = processINRExtraction(raw);
-
-      // Validate + enrich
       const validated = validateExtraction(raw);
-
-      // Compute scores
       const scores = computeScores(validated);
       validated._scores = scores;
 
-      // Build deal data for Supabase + downstream modules
       const dealData = {
         name: validated.company?.name || 'Unknown',
         sector: validated.company?.sector,
         ebitda: validated.financials?.ebitda_adjusted,
         score: scores.total,
-        brief: validated,   // the entire validated schema is stored as brief
+        brief: validated,
         user_id: session.user.id,
       };
 
-      setStatus('Saving to database...');
       const { error: dbError } = await supabase
         .from('deals')
         .upsert(dealData, { onConflict: 'name,user_id' });
@@ -779,13 +789,13 @@ export default function IMAnalyzer({ setActive, currentDeal, setCurrentDeal, ses
         const { error: insError } = await supabase.from('deals').insert(dealData);
         if (insError) {
           console.error('DB persistence failed:', insError);
-          throw new Error('Analysis complete but failed to save — please refresh and try again.');
+          throw new Error("Couldn't save — please try again");
         }
       }
 
       setCurrentDeal(dealData);
     } catch (err) {
-      setError(err.message.includes('Analysis complete') ? err.message : 'Analysis failed: ' + err.message);
+      setError("Couldn't extract — please check the file and try again.");
     } finally {
       setLoading(false);
       setStatus('');
@@ -793,47 +803,56 @@ export default function IMAnalyzer({ setActive, currentDeal, setCurrentDeal, ses
     }
   };
 
-  return (
-    <div className="grid-2" style={{ gridTemplateColumns: '40% 60%', gap: '20px' }}>
-      {/* LEFT — Upload panel */}
-      <div>
-        <div className="upload-zone mb-20" onClick={() => document.getElementById('pdf-upload').click()}>
-          <div className="amber" style={{ fontSize: '32px', marginBottom: '16px' }}>⟁</div>
-          <div className="serif" style={{ fontSize: '18px', marginBottom: '8px' }}>Upload Document</div>
-          <div className="mono muted">Information Memorandum · Financial Statements · Management Accounts</div>
-          <div className="mono muted" style={{ fontSize: '10px', marginTop: '8px' }}>
-            AI auto-detects document type · ECRM screening included · {geo.flag} {geography} flags applied
-          </div>
-          <input id="pdf-upload" type="file" accept=".pdf" hidden onChange={handleUpload} />
-        </div>
-
-        {loading && (
-          <div className="flex items-center gap-12 muted mono mt-16">
-            <span className="spinner" /> {status}
-          </div>
-        )}
-        {error && <div className="error-msg">{error}</div>}
-
-        {/* Info box */}
-        <div style={{ background: 'var(--navy3)', border: '1px solid var(--border)', borderRadius: '4px', padding: '16px', marginTop: '16px' }}>
-          <div className="section-label" style={{ marginBottom: '10px' }}>EXTRACTION ENGINE v2</div>
-          <div className="mono muted" style={{ fontSize: '10px', lineHeight: 1.8 }}>
-            Schema-first extraction — all fields extracted against a fixed canonical schema.<br/>
-            Auto-validates numeric fields · calculates derived metrics.<br/>
-            ECRM flags cover related parties, director loans, tax disputes, and geography-specific risks.
-          </div>
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+        <div style={{ fontFamily: '"DM Serif Display", serif', fontSize: '28px', color: 'var(--amber)', animation: 'pulse 1.5s infinite ease-in-out' }}>
+          {status}
         </div>
       </div>
+    );
+  }
 
-      {/* RIGHT — Results */}
+  return (
+    <div>
+      {/* ── Upload strip — always visible so user can analyse a new deal any time ── */}
+      <div
+        onClick={() => document.getElementById('pdf-upload').click()}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px',
+          padding: '16px 20px',
+          marginBottom: '24px',
+          border: '2px dashed var(--border)',
+          borderRadius: '6px',
+          background: 'var(--navy2)',
+          cursor: 'pointer',
+          transition: 'border-color 0.2s',
+        }}
+        onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--amber)'}
+        onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+      >
+        <span style={{ fontSize: '24px' }}>📄</span>
+        <div>
+          <div style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '14px', fontWeight: 500 }}>
+            {currentDeal ? 'Analyse a different deal — drop a new PDF here' : 'Drop your IM here or click to upload'}
+          </div>
+          <div style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '12px', color: 'var(--muted)', marginTop: '2px' }}>
+            PDF · UK, India, UAE · Auto-detects currency
+          </div>
+        </div>
+        <input id="pdf-upload" type="file" accept=".pdf" hidden onChange={handleUpload} />
+      </div>
+
+      {error && <div style={{ marginBottom: '16px', color: 'var(--red)', fontFamily: '"DM Sans", sans-serif', fontSize: '13px' }}>{error}</div>}
+
+      {/* ── Results — only when a deal is loaded ── */}
       {currentDeal?.brief ? (
         <ExtractionResults data={currentDeal.brief} setActive={setActive} />
       ) : (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--navy2)', border: '1px solid var(--border)', borderRadius: '4px', minHeight: '400px' }}>
-          <div style={{ textAlign: 'center', color: 'var(--muted)' }}>
-            <div style={{ fontSize: '40px', marginBottom: '16px' }}>◎</div>
-            <div className="mono" style={{ fontSize: '12px' }}>Upload a document to begin extraction</div>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '40vh', color: 'var(--muted)', fontFamily: 'DM Mono, monospace', fontSize: '13px' }}>
+          Upload a PDF above to begin extraction
         </div>
       )}
     </div>
