@@ -32,6 +32,54 @@ A single PDF upload triggers a five-stage pipeline:
 
 ## Architecture
 
+```mermaid
+flowchart TD
+    A[User uploads PDF<br/>IM or Financial Statements] --> B[Document Classification<br/>type · currency · geography]
+    B --> C[Schema-First Extraction<br/>35-field constrained JSON]
+    C --> D{Currency = INR?}
+    D -->|Yes| E[Deterministic Normalisation Layer<br/>Crore/Lakh conversion · sanity checks<br/>PAT ≤ PBT · field ≤ revenue floor]
+    D -->|No| F[Validated Deal Data]
+    E --> F
+
+    F --> G[Valuation Engine — BAUS]
+    F --> H[ECRM Risk Screen]
+    F --> I[Deal Scorer]
+
+    subgraph G[" "]
+        G1[Method 1: Build-Up<br/>sector multiple + adjustments]
+        G2[Method 2: Underlying Earnings<br/>normalised EBITDA × multiple]
+        G3[Method 3: Asset-Based Floor<br/>liquidation value]
+        G4[Method 4: Downside Sensitivity<br/>3 stress scenarios]
+        G1 & G2 & G3 & G4 --> G5[Composite Range<br/>vs. Asking Price]
+        G5 --> G6{FAIR VALUE /<br/>OVERPRICED /<br/>UNDERPRICED}
+    end
+
+    subgraph H[" "]
+        H1[Core Flags<br/>related party · director loans<br/>revenue spike · beneficial ownership]
+        H2[UK Flags<br/>Companies House · HMRC<br/>VAT/PAYE · disqualification]
+        H3[India Flags<br/>GSTIN · MCA/ROC · HUF<br/>promoter loans · PF/ESIC · FEMA]
+    end
+
+    subgraph I[" "]
+        I1[Sector Fit · EBITDA Quality<br/>Revenue Durability<br/>Owner-Dependency · Roll-up<br/>Valuation Attractiveness]
+        I1 --> I2[Weighted Deal Score<br/>vs. sector benchmark]
+    end
+
+    G6 --> J[Deal Package]
+    H3 --> J
+    H2 --> J
+    I2 --> J
+
+    J --> K[Deal Decision Brief]
+    J --> L[Seller Call Prep]
+    J --> M[Draft LOI / MoU<br/>jurisdiction-appropriate]
+
+    style A fill:#0a0a0f,stroke:#c9a84c,color:#fff
+    style J fill:#0a0a0f,stroke:#c9a84c,color:#fff
+    style D fill:#1a1a2e,stroke:#c9a84c,color:#fff
+    style G6 fill:#1a1a2e,stroke:#c9a84c,color:#fff
+```
+
 **Stack:** React 18 (Vite) · Supabase (Postgres, auth, RLS) · LLM-based extraction (Groq/Llama, migrating to Claude Sonnet) · Vercel deployment.
 
 **Key engineering decisions:**
@@ -48,10 +96,8 @@ A single PDF upload triggers a five-stage pipeline:
 ## Roadmap
 
 - [ ] US and EU geography support (SBA-aware financing logic, EU multi-jurisdiction LOI)
-- [ ] Deal comparison view (multi-deal side-by-side against sector benchmarks)
-- [ ] Daily digest with portfolio-level change tracking
 - [ ] Stripe / Razorpay billing integration
-- [ ] Official Companies House and MCA21 API integration (replacing interim data sources)
+- [ ] Official Companies House and MCA21 API integration (replacing interim data sources, held up by Companies House API provider themselves)
 
 ## Status
 
